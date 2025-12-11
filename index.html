@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THOUGHT OUTSOURCING</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-ExtraBold.woff2') format('woff2');
+            font-weight: 800;
+            font-display: swap;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'KakaoBigFont', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 50px 40px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-family: 'BBH Sans Bartle', 'KakaoBigFont', sans-serif;
+            font-size: 6em;
+            font-weight: 400;
+            letter-spacing: 3px;
+            color: #7FFFD4;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            letter-spacing: 5px;
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+        
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .input-section {
+            width: 100%;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 20px 25px;
+            background: #7FFFD4;
+            border: none;
+            color: #0a0a0a;
+            font-family: 'KakaoBigFont', sans-serif;
+            font-size: 1.1em;
+            font-weight: 700;
+            resize: none;
+            height: 70px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(127, 255, 212, 0.3);
+            text-align: center;
+        }
+        
+        textarea:focus {
+            box-shadow: 0 0 50px rgba(127, 255, 212, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        textarea::placeholder {
+            color: rgba(10, 10, 10, 0.5);
+            font-weight: 400;
+            text-align: center;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 2px solid #7FFFD4;
+            color: #7FFFD4;
+            font-family: 'KakaoBigFont', sans-serif;
+            font-size: 0.95em;
+            font-weight: 700;
+            letter-spacing: 4px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .submit-btn:hover {
+            background: #7FFFD4;
+            color: #0a0a0a;
+            box-shadow: 0 0 30px rgba(127, 255, 212, 0.4);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .outsourcers-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+        }
+        
+        .outsourcer-card {
+            background: #0f0f0f;
+            border: 1px solid #1a1a1a;
+            padding: 22px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .outsourcer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #7FFFD4;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .outsourcer-card.processing::before {
+            opacity: 1;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .outsourcer-card.processing {
+            border-color: #7FFFD4;
+            box-shadow: 0 0 25px rgba(127, 255, 212, 0.15);
+        }
+        
+        .outsourcer-card.completed {
+            border-color: #2a2a2a;
+        }
+        
+        .outsourcer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        
+        .outsourcer-name {
+            font-size: 1em;
+            color: #7FFFD4;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        
+        .status-badge {
+            font-size: 0.65em;
+            padding: 4px 10px;
+            background: #1a1a1a;
+            color: #666;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        
+        .status-badge.status-processing {
+            color: #7FFFD4;
+            background: rgba(127, 255, 212, 0.1);
+            animation: blink 1s infinite;
+        }
+        
+        .status-badge.status-completed {
+            color: #888;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: #1a1a1a;
+            margin-bottom: 18px;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #7FFFD4;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(127, 255, 212, 0.5);
+        }
+        
+        .outsourcer-content {
+            font-size: 0.88em;
+            line-height: 1.7;
+            color: #ccc;
+            flex: 1;
+            overflow-y: auto;
+            font-weight: 400;
+        }
+        
+        .outsourcer-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .outsourcer-content::-webkit-scrollbar-track {
+            background: #111;
+        }
+        
+        .outsourcer-content::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease;
+        }
+        
+        .overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .final-message {
+            font-family: 'KakaoBigFont', sans-serif;
+            font-size: 2.8em;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: #7FFFD4;
+            text-align: center;
+            margin-bottom: 70px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease 0.5s;
+        }
+        
+        .overlay.show .final-message {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .arrow-button {
+            width: 70px;
+            height: 70px;
+            border: 2px solid #7FFFD4;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInArrow 1s ease 1.5s forwards, bounce 2s ease 2.5s infinite;
+        }
+        
+        .arrow-button:hover {
+            background: #7FFFD4;
+            transform: translateY(0) scale(1.1);
+            box-shadow: 0 0 30px rgba(127, 255, 212, 0.4);
+        }
+        
+        .arrow-button:hover .arrow {
+            border-color: #0a0a0a;
+        }
+        
+        .arrow {
+            width: 22px;
+            height: 22px;
+            border-right: 3px solid #7FFFD4;
+            border-top: 3px solid #7FFFD4;
+            transform: rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+        
+        @keyframes fadeInArrow {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="subtitle">대신 생각해드립니다</div>
+            <h1>THOUGHT<br>OUTSOURCING</h1>
+        </div>
+        
+        <div class="bottom-section">
+            <div class="input-section">
+                <textarea id="questionInput" placeholder="무엇이든 입력하세요"></textarea>
+                <button class="submit-btn" id="submitBtn">시작</button>
+            </div>
+            
+            <div class="outsourcers-grid">
+                <div class="outsourcer-card" data-source="chatgpt">
+                    <div class="outsourcer-header">
+                        <div class="outsourcer-name">ChatGPT</div>
+                        <div class="status-badge status-idle">IDLE</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="outsourcer-content">대기 중...</div>
+                </div>
+                
+                <div class="outsourcer-card" data-source="instagram">
+                    <div class="outsourcer-header">
+                        <div class="outsourcer-name">Instagram</div>
+                        <div class="status-badge status-idle">IDLE</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="outsourcer-content">대기 중...</div>
+                </div>
+                
+                <div class="outsourcer-card" data-source="youtube">
+                    <div class="outsourcer-header">
+                        <div class="outsourcer-name">YouTube</div>
+                        <div class="status-badge status-idle">IDLE</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="outsourcer-content">대기 중...</div>
+                </div>
+                
+                <div class="outsourcer-card" data-source="twitter">
+                    <div class="outsourcer-header">
+                        <div class="outsourcer-name">Twitter/X</div>
+                        <div class="status-badge status-idle">IDLE</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="outsourcer-content">대기 중...</div>
+                </div>
+                
+                <div class="outsourcer-card" data-source="dcinside">
+                    <div class="outsourcer-header">
+                        <div class="outsourcer-name">DCinside</div>
+                        <div class="status-badge status-idle">IDLE</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="outsourcer-content">대기 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay">
+        <div class="final-message">당신은 스스로 생각하고 있나요？</div>
+        <div class="arrow-button" id="arrowButton">
+            <div class="arrow"></div>
+        </div>
+    </div>
+
+    <script>
+        // 각 플랫폼의 응답 생성 템플릿 - 입력된 질문과 연관성 높게 수정
+        const responseTemplates = {
+            chatgpt: (question) => {
+                const templates = [
+                    `"${question}"에 대한 질문 감사합니다. 이 주제는 다각도의 분석이 필요합니다. 전문가들은 맥락에 따라 접근 방식이 달라질 수 있다고 조언합니다.`,
+                    `귀하의 "${question}" 질문에 답변드립니다. 학술적 연구와 실무 경험을 종합하면, 균형잡힌 시각으로 접근하는 것이 중요합니다.`,
+                    `"${question}"는 흥미로운 질문입니다. 이 분야 전문가들 사이에서도 다양한 의견이 존재하며, 신중한 정보 수집과 분석이 필요합니다.`
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            },
+            
+            instagram: (question) => {
+                const keywords = question.split(' ').filter(w => w.length > 2).slice(0, 3);
+                const hashtags = keywords.map(k => `#${k}`).join(' ');
+                const templates = [
+                    `✨ "${question}" 너무 공감돼요! 💖 요즘 저도 이것 때문에 고민했어요 😊 우리 모두 함께 힐링해요 🌸 ${hashtags} #일상 #공감`,
+                    `오늘의 생각 💭 "${question}"에 대해 깊이 생각해봤어요. 각자의 마음속에 답이 있는 것 같아요 ✨ ${hashtags} #데일리 #힐링`,
+                    `"${question}" 진짜 중요한 질문! 🌟 이런 걸 고민하는 여러분 너무 멋져요 💪 함께 성장해가요 ✨ ${hashtags} #성장 #일상`
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            },
+            
+            youtube: (question) => {
+                const templates = [
+                    `🔥【충격】"${question}" 이거 실화? 99%가 모르는 진실 폭로 (충격주의) 끝까지 보세요 실화냐고`,
+                    `⚠️ 긴급! "${question}" 때문에 난리났습니다 실시간 댓글 반응 미쳤다 ㄷㄷ 이거 레전드`,
+                    `🚨【레전드】"${question}" 절대 하지마세요 전문가가 말하는 충격 이유 TOP3 대공개`
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            },
+            
+            twitter: (question) => {
+                const templates = [
+                    `"${question}" 이거 진짜 문제임. 다들 왜 모르는 척 하는지 이해 안 되네. 매번 이런 식이면 답이 없다`,
+                    `솔직히 ${question} 관련 말 많은데 팩트는 이거임: 아무도 책임 안 지려고 함. 계속 이러면 안 되는데`,
+                    `${question} ㅋㅋ 예상했다 또 이러네. 똑같은 패턴 반복하면서 왜 배우질 않음? 답답하네 진짜`
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            },
+            
+            dcinside: (question) => {
+                const templates = [
+                    `"${question}" ㅇㅈ? ㄹㅇ 개웃기네 ㅋㅋㅋㅋ 이런 거 물어보는 것부터가 수준 ㅋㅋ 답 없음`,
+                    `ㄹㅇ ${question} 이딴 걸 진지하게 물어봄? ㅋㅋㅋ 수준 좀 보소 ㅋㅋ 레전드네 진짜`,
+                    `${question} 관련 ㅋㅋㅋㅋ 다들 똑같네 ㅋㅋ 매번 이 패턴임 ㅅㄱ 현웃터짐 ㄹㅇ`
+                ];
+                return templates[Math.floor(Math.random() * templates.length)];
+            }
+        };
+
+        const submitBtn = document.getElementById('submitBtn');
+        const questionInput = document.getElementById('questionInput');
+        
+        const outsourcers = [
+            { name: 'chatgpt', delay: 800 },
+            { name: 'instagram', delay: 1200 },
+            { name: 'youtube', delay: 1500 },
+            { name: 'twitter', delay: 1000 },
+            { name: 'dcinside', delay: 1800 }
+        ];
+
+        // 각 플랫폼 스타일로 답변 생성
+        function generateResponse(source, question) {
+            return responseTemplates[source](question);
+        }
+        
+        submitBtn.addEventListener('click', async () => {
+            const question = questionInput.value.trim();
+            if (!question) {
+                alert('질문을 입력해주세요.');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '처리 중...';
+            
+            // 모든 카드 초기화
+            outsourcers.forEach(outsourcer => {
+                const card = document.querySelector(`[data-source="${outsourcer.name}"]`);
+                const badge = card.querySelector('.status-badge');
+                const content = card.querySelector('.outsourcer-content');
+                const progressFill = card.querySelector('.progress-fill');
+                
+                card.classList.remove('processing', 'completed');
+                badge.className = 'status-badge status-idle';
+                badge.textContent = 'IDLE';
+                content.textContent = '대기 중...';
+                progressFill.style.width = '0%';
+            });
+            
+            // 각 외주처 순차적으로 처리
+            for (let outsourcer of outsourcers) {
+                await processOutsourcer(outsourcer.name, question, outsourcer.delay);
+            }
+            
+            // 모든 처리 완료 후 3초 뒤 오버레이 표시
+            setTimeout(() => {
+                document.getElementById('overlay').classList.add('show');
+            }, 3000);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '시작';
+        });
+        
+        async function processOutsourcer(sourceName, question, delay) {
+            const card = document.querySelector(`[data-source="${sourceName}"]`);
+            const badge = card.querySelector('.status-badge');
+            const content = card.querySelector('.outsourcer-content');
+            const progressFill = card.querySelector('.progress-fill');
+            
+            // 처리 시작
+            card.classList.add('processing');
+            badge.className = 'status-badge status-processing';
+            badge.textContent = 'PROCESSING';
+            
+            // 진행 바 애니메이션
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 100);
+            
+            // 딜레이 후 답변 생성
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            const response = generateResponse(sourceName, question);
+            
+            clearInterval(progressInterval);
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+                card.classList.remove('processing');
+                card.classList.add('completed');
+                badge.className = 'status-badge status-completed';
+                badge.textContent = 'COMPLETED';
+                content.textContent = response;
+            }, 300);
+        }
+        
+        // 화살표 버튼 클릭 이벤트
+        document.getElementById('arrowButton').addEventListener('click', () => {
+            // page1.html로 이동
+            window.location.href = 'page1.html';
+        });
+    </script>
+</body>
+</html>

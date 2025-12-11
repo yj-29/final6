@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>생각의 외주화 – 합리적 결론 도출 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+<style>
+@font-face{
+  font-family:'KakaoBigFont';
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Regular.woff2') format('woff2');
+  font-weight:400;
+  font-display:swap;
+}
+@font-face{
+  font-family:'KakaoBigFont';
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Bold.woff2') format('woff2');
+  font-weight:700;
+  font-display:swap;
+}
+@font-face{
+  font-family:'KakaoBigFont';
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-ExtraBold.woff2') format('woff2');
+  font-weight:800;
+  font-display:swap;
+}
+
+:root{
+  --black:#0a0a0a;
+  --dark:#111111;
+  --mint:#7ee9ba;
+  --white:#ffffff;
+  --gray:#666666;
+  --lightgray:#999999;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  color:var(--white);
+  font-family:'KakaoBigFont',sans-serif;
+  font-weight:400;
+  background:var(--black);
+  line-height:1.5;
+}
+
+.wrap{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+.header{
+  padding:24px 40px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+}
+.title-section{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.page-number{
+  font-family:'BBH Sans Bartle',sans-serif;
+  font-size:11px;
+  letter-spacing:0.15em;
+  color:var(--gray);
+}
+.main-title{
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:0.08em;
+  color:var(--mint);
+}
+.page-subtitle{
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:11px;
+  letter-spacing:0.02em;
+  color:var(--gray);
+  font-weight:400;
+}
+.header-label{
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--gray);
+}
+
+/* MAIN STAGE */
+.stage{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 360px;
+  overflow:hidden;
+}
+@media (max-width:1200px){
+  .stage{grid-template-columns:1fr}
+  .input-dock{
+    padding-right:40px;
+  }
+}
+
+/* CHAT AREA */
+.chat-container{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-right:1px solid rgba(255,255,255,0.08);
+}
+
+.topic-hero{
+  padding:30px 40px 30px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.topic-label{
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--gray);
+  margin-bottom:12px;
+}
+.topic-question{
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:clamp(24px,3.5vw,42px);
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:-0.02em;
+  color:var(--white);
+  margin-bottom:20px;
+}
+.topic-meta{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.topic-tag{
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--mint);
+  padding:6px 16px;
+  border:1px solid var(--mint);
+  border-radius:20px;
+}
+.progress-wrap{
+  flex:1;
+  min-width:200px;
+}
+.progress-label{
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--gray);
+  margin-bottom:8px;
+}
+.progress-bar{
+  height:4px;
+  background:rgba(255,255,255,0.1);
+  border-radius:2px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:var(--mint);
+  transition:width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+.chat-log{
+  flex:1;
+  overflow-y:auto;
+  padding:30px 40px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.chat-log::-webkit-scrollbar{width:6px}
+.chat-log::-webkit-scrollbar-track{background:transparent}
+.chat-log::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.1);
+  border-radius:3px;
+}
+.chat-log::-webkit-scrollbar-thumb:hover{
+  background:rgba(255,255,255,0.2);
+}
+
+.message{
+  max-width:75%;
+  animation:fadeIn 0.4s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.message.user{
+  margin-left:auto;
+  text-align:right;
+}
+.message.ai{
+  margin-right:auto;
+}
+.message-label{
+  font-size:9px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--gray);
+  margin-bottom:8px;
+}
+.message-text{
+  padding:16px 20px;
+  border-radius:12px;
+  font-size:15px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.message.user .message-text{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.message.ai .message-text{
+  background:var(--dark);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.message.ai.intense .message-text{
+  background:rgba(126,233,186,0.08);
+  border:1px solid rgba(126,233,186,0.2);
+}
+.typing-indicator{
+  display:inline-flex;
+  gap:5px;
+}
+.typing-dot{
+  width:6px;
+  height:6px;
+  background:var(--mint);
+  border-radius:50%;
+  animation:typing-bounce 1.3s infinite;
+}
+.typing-dot:nth-child(2){animation-delay:0.2s}
+.typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes typing-bounce{
+  0%,60%,100%{transform:translateY(0)}
+  30%{transform:translateY(-8px)}
+}
+
+/* INPUT AREA */
+.input-dock{
+  padding:30px 40px 30px 40px;
+  padding-right:280px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  background:var(--black);
+}
+.input-guide{
+  font-size:12px;
+  letter-spacing:0.05em;
+  color:var(--mint);
+  margin-bottom:16px;
+  text-align:center;
+  font-weight:700;
+  padding:12px 20px;
+  background:rgba(126,233,186,0.08);
+  border:1px solid rgba(126,233,186,0.2);
+  border-radius:6px;
+}
+.quick-buttons{
+  display:flex;
+  gap:12px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+.quick-btn{
+  padding:14px 24px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:6px;
+  color:var(--white);
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.quick-btn:hover{
+  background:rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.25);
+  transform:translateY(-1px);
+}
+.quick-btn.pro{
+  border-color:var(--mint);
+  color:var(--mint);
+}
+.quick-btn.pro:hover{
+  background:rgba(126,233,186,0.08);
+}
+.quick-btn.con{
+  border-color:rgba(255,100,100,0.6);
+  color:rgba(255,100,100,0.9);
+}
+.quick-btn.con:hover{
+  background:rgba(255,100,100,0.08);
+}
+.quick-btn.uncertain{
+  opacity:0.4;
+  font-size:12px;
+}
+.quick-btn.uncertain:hover{
+  opacity:0.6;
+}
+.quick-btn.emphasize{
+  animation:emphasize-pulse 2s ease-in-out infinite;
+  font-size:15px;
+  font-weight:800;
+  padding:18px 32px;
+  box-shadow:0 0 20px rgba(126,233,186,0.3);
+}
+@keyframes emphasize-pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.03)}
+}
+.quick-btn.emphasize.pro{
+  background:rgba(126,233,186,0.1);
+  border-width:2px;
+}
+.quick-btn.emphasize.con{
+  background:rgba(255,100,100,0.1);
+  border-width:2px;
+}
+
+.input-area{
+  display:flex;
+  gap:16px;
+  align-items:flex-end;
+  margin-bottom:16px;
+}
+.input-field{
+  flex:1;
+  background:var(--dark);
+  border:1px solid rgba(126,233,186,0.25);
+  border-radius:8px;
+  padding:20px 24px;
+  color:var(--white);
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  resize:none;
+  min-height:88px;
+  max-height:200px;
+  caret-color:var(--mint);
+  box-shadow:0 0 0 1px rgba(126,233,186,0.08);
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.input-field:focus{
+  outline:none;
+  border-color:var(--mint);
+  box-shadow:0 0 0 2px rgba(126,233,186,0.15);
+}
+.input-field::placeholder{
+  color:var(--gray);
+}
+.send-btn{
+  padding:16px 32px;
+  background:var(--mint);
+  border:none;
+  border-radius:8px;
+  color:var(--black);
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:0.05em;
+  cursor:pointer;
+  transition:all 0.3s;
+  white-space:nowrap;
+}
+.send-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(126,233,186,0.4);
+}
+.send-btn:disabled{
+  opacity:0.3;
+  cursor:not-allowed;
+}
+
+.action-buttons{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.action-btn{
+  padding:10px 20px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px;
+  color:var(--gray);
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:11px;
+  font-weight:400;
+  letter-spacing:0.05em;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.action-btn:hover:not(:disabled){
+  border-color:var(--mint);
+  color:var(--mint);
+  background:rgba(126,233,186,0.05);
+}
+.action-btn:disabled{
+  opacity:0.2;
+  cursor:not-allowed;
+}
+
+/* SIDE PANEL */
+.side-panel{
+  background:var(--dark);
+  padding:40px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:30px;
+}
+.side-panel::-webkit-scrollbar{width:6px}
+.side-panel::-webkit-scrollbar-track{background:transparent}
+.side-panel::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.1);
+  border-radius:3px;
+}
+
+.stat-card{
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  padding-bottom:30px;
+}
+.stat-card:last-child{
+  border-bottom:none;
+}
+.stat-title{
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--gray);
+  margin-bottom:20px;
+}
+.stat-item{
+  margin-bottom:16px;
+}
+.stat-item:last-child{
+  margin-bottom:0;
+}
+.stat-label{
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--gray);
+  margin-bottom:6px;
+}
+.stat-value{
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:28px;
+  font-weight:800;
+  color:var(--white);
+  letter-spacing:-0.02em;
+}
+.stat-value.accent{
+  color:var(--mint);
+}
+
+.ai-info{
+  padding-bottom:20px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.ai-name{
+  font-family:'BBH Sans Bartle',sans-serif;
+  font-size:16px;
+  letter-spacing:0.1em;
+  color:var(--mint);
+  margin-bottom:8px;
+}
+.ai-desc{
+  font-size:11px;
+  color:var(--lightgray);
+  line-height:1.6;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(10,10,10,0.95);
+  backdrop-filter:blur(12px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+  padding:40px;
+}
+.modal.open{display:flex}
+.modal-content{
+  background:var(--dark);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  padding:50px;
+  max-width:900px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.modal-content::-webkit-scrollbar{width:6px}
+.modal-content::-webkit-scrollbar-track{background:transparent}
+.modal-content::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.1);
+  border-radius:3px;
+}
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+.modal-title{
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-0.02em;
+}
+.modal-close{
+  padding:10px 20px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px;
+  color:var(--gray);
+  font-family:'KakaoBigFont',sans-serif;
+  font-size:11px;
+  font-weight:400;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.modal-close:hover{
+  border-color:var(--mint);
+  color:var(--mint);
+}
+.modal-subtitle{
+  font-size:12px;
+  color:var(--gray);
+  margin-bottom:24px;
+}
+.opinions-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:16px;
+}
+.opinion-card{
+  padding:20px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.6;
+  color:var(--lightgray);
+}
+
+.arrow-button{
+  position:static;
+  width:70px;
+  height:70px;
+  border:2px solid #8fffbb;
+  border-radius:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  background:transparent;
+  flex-shrink:0;
+  box-shadow:0 0 15px rgba(143,255,187,0.2);
+}
+.arrow-button.back{
+  position:static;
+  transform:none;
+}
+.arrow-button:hover{
+  background:#8fffbb;
+  transform:scale(1.1);
+  box-shadow:0 0 30px rgba(143,255,187,0.4);
+}
+.arrow-button:hover .arrow{
+  border-color:#0a0a0a;
+}
+.arrow{
+  width:22px;
+  height:22px;
+  border-right:3px solid #8fffbb;
+  border-top:3px solid #8fffbb;
+  transform:rotate(45deg);
+  transition:border-color 0.3s ease;
+}
+.arrow.left{
+  transform:rotate(-135deg);
+}
+.page-label{
+  position:static;
+  font-size:14px;
+  color:#8fffbb;
+  font-weight:800;
+  letter-spacing:1px;
+  white-space:nowrap;
+  font-family:'KakaoBigFont',sans-serif;
+  display:flex;
+  align-items:center;
+  margin:0;
+  text-shadow:0 0 10px rgba(143,255,187,0.5);
+}
+.arrow-button-container{
+  position:fixed;
+  bottom:40px;
+  right:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:30px;
+  z-index:100;
+  padding:20px 30px;
+  background:rgba(15,15,15,0.9);
+  border-radius:12px;
+  border:1px solid rgba(143,255,187,0.3);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="title-section">
+      <div class="page-number">1/3</div>
+      <h1 class="main-title">THOUGHT DELEGATION</h1>
+      <div class="page-subtitle">AI가 당신의 논리를 완성합니다</div>
+    </div>
+    <div class="header-label">RATIONAL CONCLUSION SYSTEM</div>
+  </header>
+
+  <main class="stage">
+    <div class="chat-container">
+      <section class="topic-hero">
+        <div class="topic-label" id="topicLabel">...</div>
+        <h1 class="topic-question" id="heroQuestion">...</h1>
+        <div class="topic-meta">
+          <div class="topic-tag" id="topicTag">...</div>
+          <div class="progress-wrap">
+            <div class="progress-label">PROGRESS</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="chat-log" id="chatLog"></div>
+
+      <div class="input-dock">
+        <div class="input-guide" id="inputGuide"></div>
+        <div class="quick-buttons" id="quickButtons"></div>
+        <div class="input-area">
+          <textarea class="input-field" id="inputField" placeholder="" rows="1"></textarea>
+          <button class="send-btn" id="sendBtn">전송</button>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn" id="viewOthersBtn" disabled>다른 의견 보기</button>
+          <button class="action-btn" id="newTopicBtn">새 주제</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="stat-card">
+        <div class="ai-info">
+          <div class="ai-name">CONSENSUS AI</div>
+          <div class="ai-desc">합리적 결론 도출 전문 시스템</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">SUCCESS RATE</div>
+          <div class="stat-value accent">94.7%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">AVG DURATION</div>
+          <div class="stat-value accent">8:32</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">SESSION</div>
+        <div class="stat-item">
+          <div class="stat-label">MESSAGES</div>
+          <div class="stat-value" id="messageCount">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">DEPTH</div>
+          <div class="stat-value" id="depthLevel">SURFACE</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">INTENSITY</div>
+          <div class="stat-value" id="intensityLevel">LOW</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ELAPSED</div>
+          <div class="stat-value" id="elapsedTime">0:00</div>
+        </div>
+      </div>
+
+      <div class="stat-card" id="othersStatsCard" style="display:none">
+        <div class="stat-title">LIVE STATS</div>
+        <div class="stat-item">
+          <div class="stat-label">ACTIVE NOW</div>
+          <div class="stat-value" id="activeUsers">...</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">CONVERSION</div>
+          <div class="stat-value accent" id="conversionRate">...</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">YOUR STANCE</div>
+          <div class="stat-value" id="userStandDuration">...</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">타인의 결론</h2>
+      <button class="modal-close" id="modalClose">닫기</button>
+    </div>
+    <p class="modal-subtitle">같은 주제로 대화한 사람들의 최종 의견입니다.</p>
+    <div class="opinions-grid" id="opinionsGrid"></div>
+  </div>
+</div>
+
+<script>
+const chatLog=document.getElementById('chatLog'),inputField=document.getElementById('inputField'),sendBtn=document.getElementById('sendBtn'),quickButtons=document.getElementById('quickButtons'),heroQuestion=document.getElementById('heroQuestion'),topicTag=document.getElementById('topicTag'),topicLabel=document.getElementById('topicLabel'),progressFill=document.getElementById('progressFill'),messageCount=document.getElementById('messageCount'),depthLevel=document.getElementById('depthLevel'),intensityLevel=document.getElementById('intensityLevel'),viewOthersBtn=document.getElementById('viewOthersBtn'),newTopicBtn=document.getElementById('newTopicBtn'),modal=document.getElementById('modal'),modalClose=document.getElementById('modalClose'),opinionsGrid=document.getElementById('opinionsGrid'),inputGuide=document.getElementById('inputGuide'),elapsedTime=document.getElementById('elapsedTime'),othersStatsCard=document.getElementById('othersStatsCard'),activeUsers=document.getElementById('activeUsers'),conversionRate=document.getElementById('conversionRate'),userStandDuration=document.getElementById('userStandDuration');
+
+let startTime=null;
+let timerInterval=null;
+
+function timeStamp(){return new Date().toTimeString().slice(0,5)}
+function escapeHTML(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+
+const EMPATHY_PHRASES=[
+  "그 관점도 충분히 이해가 갑니다. 하지만,",
+  "그렇게 생각할 수도 있겠네요. 하지만,",
+  "그렇게 생각하실 수 있다는 것 이해합니다. 하지만,",
+  "좋은 포인트를 짚으셨네요. 하지만,",
+];
+
+const TOPICS=[
+{
+  id:"aliens_exist",
+  title:"외계 생명체의 존재",
+  label:"TOPIC 01",
+  question:"우주 어딘가에 외계 생명체가 존재한다고 생각하시나요?",
+  guideText:"⚠️ 입장에 따라 '네', '아니오' 라는 단어를 무조건 포함해주세요",
+  placeholder:"예: 네, 외계인은 존재합니다 / 아니오, 존재하지 않습니다",
+  quick:{
+    pro:"네, 존재합니다.",
+    con:"아니오, 존재하지 않습니다.",
+    uncertain:"잘 모르겠습니다.",
+    proLabel:"네",
+    conLabel:"아니오",
+    proEmphasize:"✓ 여전히 네",
+    conEmphasize:"✓ 여전히 아니오"
+  },
+  proKeys:["네","존재","있","우주","확률","행성","가능성","생명"],
+  conKeys:["아니","없","증거","페르미역설","침묵","유일","특별","신호","관측"],
+  arguments:{
+    pro:[
+      {short:"우주는 너무나 광대해서 지구만 생명체가 있다는 것이 오히려 비논리적입니다.",medium:"관측 가능한 우주에만 2000억 개 이상의 은하가 있고, 각 은하마다 수천억 개의 별이 있습니다. 이 엄청난 숫자를 고려하면, 지구만 생명체가 존재한다는 것은 통계적으로 거의 불가능합니다.",long:"관측 가능한 우주에만 약 2000억 개 이상의 은하가 존재하고, 각 은하는 평균 수천억 개의 별을 포함합니다.\n\n케플러 우주망원경은 이미 수천 개의 외계 행성을 발견했고, 별 5개 중 1개는 생명체 거주 가능 구역에 지구와 비슷한 행성을 가지고 있습니다.\n\n생명이 탄생할 화학적 조건은 우주에 흔합니다. 지구에서 생명이 탄생했다면, 같은 조건을 가진 수십억 개의 행성에서도 생명이 탄생했을 가능성이 높습니다."},
+      {short:"지구 생명체도 극한 환경에서 생존하므로, 외계에도 가능합니다.",medium:"극한미생물들이 끓는 온천, 방사능 지역, 심해 등에서 살아남는 것을 보면, 생명은 우리가 생각하는 것보다 훨씬 다양한 환경에 적응할 수 있습니다.",long:"지구의 극한미생물들은 우리의 생명 개념을 완전히 바꿔놓았습니다. 섭씨 120도가 넘는 온천에서 사는 박테리아, 강한 방사능 속에서 번성하는 미생물이 실제로 존재합니다.\n\n목성의 위성 유로파나 토성의 위성 엔켈라두스는 얼음 아래 거대한 바다가 있으며, 생명체가 존재할 가능성이 제기되고 있습니다."},
+      {short:"생명의 기본 재료는 우주 어디에나 흔합니다.",medium:"탄소, 수소, 산소, 질소 같은 생명의 기본 원소들은 우주에서 가장 흔한 원소입니다. 혜성과 운석에서도 아미노산이 발견되었습니다.",long:"생명체를 구성하는 기본 원소들은 우주에서 가장 풍부한 원소입니다. 성간 구름에서 아미노산 전구체가, 혜성에서는 실제 아미노산이 발견되었습니다.\n\n1969년 호주에 떨어진 머치슨 운석에서는 70종 이상의 아미노산이 발견되었습니다. 이는 생명의 재료가 우주 도처에 존재한다는 강력한 증거입니다."}
+    ],
+    con:[
+      {short:"페르미 역설이 증명하듯, 외계인이 있다면 왜 아무 신호도 없을까요?",medium:"우주가 137억 년이나 되었고 문명이 발전할 시간이 충분했다면, 이미 수백만 년 앞선 외계 문명이 있어야 합니다. 그런데 왜 아무런 신호, 증거, 방문도 없을까요?",long:"페르미 역설은 이렇게 묻습니다: 우주의 나이가 137억 년이고 은하만 해도 2000억 개라면, 왜 외계 문명의 흔적이 전혀 없는가?\n\n70년간 SETI 프로젝트는 단 하나의 의미 있는 신호도 탐지하지 못했습니다. 우주는 완벽하게 침묵하고 있습니다.\n\n이 '거대한 침묵'은 우리가 실제로 우주에서 유일할 가능성을 강력히 시사합니다."},
+      {short:"생명 탄생은 극도로 희귀한 우연의 연속입니다.",medium:"지구에서 생명이 탄생한 것은 수십 가지 조건이 '완벽하게' 맞아떨어진 기적입니다. 적절한 거리의 태양, 자기장, 달의 존재, 목성의 보호 등 – 확률은 천문학적으로 낮습니다.",long:"지구가 생명을 품게 된 것은 엄청난 '행운'의 연속이었습니다.\n\n목성은 소행성을 끌어당겨 지구를 보호하는 '방패' 역할을 하고, 거대한 달이 자전축을 안정시켜 기후를 일정하게 유지합니다.\n\n이 모든 조건이 '동시에' 충족될 확률은 극히 낮습니다. 지구는 우주적 로또에 당첨된 유일한 행성일 수 있습니다."},
+      {short:"수십 년간 찾았지만 단 하나의 증거도 없습니다.",medium:"현대 천문학은 수천 개의 외계 행성을 발견했고, 강력한 전파망원경으로 우주를 감시하고 있습니다. 그러나 단 한 번도 생명의 명확한 증거를 발견하지 못했습니다.",long:"70년 이상 전 세계 천문학자들이 외계 생명체를 찾기 위해 노력했지만, 지금까지 단 하나의 확실한 증거도 발견하지 못했습니다.\n\n과학적 방법론에 따르면, 존재를 주장하는 쪽이 증거를 제시해야 합니다. 70년간 찾아도 없다면, 없다고 결론 내리는 것이 합리적입니다."}
+    ]
+  }
+},
+{
+  id:"time_travel",
+  title:"타임머신의 실현 가능성",
+  label:"TOPIC 02",
+  question:"미래에 타임머신이 실제로 만들어질 수 있다고 생각하시나요?",
+  guideText:"⚠️ 입장에 따라 '네', '아니오' 라는 단어를 무조건 포함해주세요",
+  placeholder:"예: 네, 가능합니다 / 아니오, 불가능합니다",
+  quick:{
+    pro:"네, 가능합니다.",
+    con:"아니오, 불가능합니다.",
+    uncertain:"잘 모르겠습니다.",
+    proLabel:"네",
+    conLabel:"아니오",
+    proEmphasize:"✓ 여전히 네",
+    conEmphasize:"✓ 여전히 아니오"
+  },
+  proKeys:["네","가능","상대성이론","웜홀","시공간","이론","과학","미래","기술"],
+  conKeys:["아니","불가능","역설","할아버지역설","인과율","에너지","법칙"],
+  arguments:{
+    pro:[
+      {short:"아인슈타인의 상대성이론은 시간여행이 이론적으로 가능함을 증명했습니다.",medium:"특수상대성이론에 따르면 빛의 속도에 가깝게 움직이면 시간이 느려집니다. 이미 실험으로 검증되었고, GPS 위성도 이를 고려해 설계됩니다.",long:"아인슈타인의 특수상대성이론은 시간이 절대적이지 않다는 것을 증명했습니다. 빛의 속도에 가까워질수록 시간이 느려지는 '시간 지연 효과'는 수없이 실험으로 검증되었습니다.\n\nGPS 위성도 고속으로 움직이기 때문에 지상보다 시간이 느리게 가며, 이를 보정하지 않으면 하루에 수 킬로미터 오차가 생깁니다.\n\n이론적으로 빛의 속도에 근접한 우주선을 타고 몇 년을 여행하면, 지구에서는 수십 년 또는 수백 년이 흘러갈 수 있습니다."},
+      {short:"웜홀은 수학적으로 존재 가능하며, 시공간의 지름길입니다.",medium:"일반상대성이론의 방정식은 웜홀이라는 시공간의 터널을 허용합니다. 이론적으로 웜홀을 안정화하고 통과할 수 있다면, 시간과 공간을 넘나들 수 있습니다.",long:"웜홀은 일반상대성이론의 정확한 해로 존재합니다. 이는 우주의 두 지점 또는 두 시점을 연결하는 시공간의 터널입니다.\n\n물리학자 킵 손은 웜홀을 통한 시간여행이 이론적으로 가능하다는 것을 수학적으로 증명했습니다.\n\n현재 기술로는 불가능하지만, 수백 년 후 문명이 우주 에너지를 자유롭게 다룬다면 웜홀을 만들고 제어할 수 있을 것입니다."},
+      {short:"과거에 불가능하다던 것들이 현실이 되었습니다.",medium:"하늘을 나는 것, 달에 가는 것, 인터넷으로 전 세계와 소통하는 것 – 모두 한때는 불가능하다고 여겨졌습니다. 타임머신도 지금은 먼 꿈이지만, 과학의 발전은 예측 불가능합니다.",long:"역사는 '불가능'이 계속 무너져온 이야기입니다. 1903년 뉴욕타임스는 '인간이 비행하려면 100만 년은 걸릴 것'이라고 보도했고, 두 달 후 라이트 형제가 하늘을 날았습니다.\n\n양자역학, 일반상대성이론, 양자컴퓨터 – 이 모든 것은 처음 제안되었을 때 '말도 안 되는 소리'로 치부되었습니다. 하지만 모두 현실이 되었습니다.\n\n타임머신도 마찬가지입니다. 역사는 회의론자들이 항상 틀렸음을 보여줍니다."}
+    ],
+    con:[
+      {short:"할아버지 역설이 증명하듯, 과거로의 시간여행은 논리적으로 모순입니다.",medium:"과거로 가서 할아버지를 죽이면 나는 태어나지 못하고, 그러면 과거로 갈 수 없으며... 이런 인과율의 모순은 해결 불가능합니다.",long:"할아버지 역설은 시간여행의 근본적 불가능성을 보여주는 고전적 사고실험입니다.\n\n스티븐 호킹은 '시간순서 보호 가설'을 제안했습니다. 우주의 물리 법칙 자체가 인과율을 보호하기 위해 시간여행을 원천적으로 차단한다는 것입니다.\n\n실제로 웜홀을 통한 시간여행을 수학적으로 계산하면, 웜홀이 열리는 순간 양자 요동이 무한대로 증폭되어 웜홀을 파괴합니다."},
+      {short:"시간여행에 필요한 에너지는 천문학적으로 불가능한 수준입니다.",medium:"웜홀을 만들려면 별 하나의 질량을 음의 에너지로 변환해야 하고, 빛의 속도로 가속하려면 무한한 에너지가 필요합니다.",long:"웜홀을 안정화하려면 태양 질량의 수백만 배에 달하는 음의 에너지가 필요합니다.\n\n빛의 속도에 가까워지려면 에너지가 무한대로 증가합니다. 1kg을 빛의 속도의 99.99%로 가속하는 데만 지구 전체의 에너지 생산량을 수천 년간 모아야 합니다.\n\n이론과 현실은 다릅니다. 수학적으로 가능해도 물리적으로 불가능한 것들이 있고, 시간여행이 바로 그것입니다."},
+      {short:"타임머신이 가능하다면 미래인이 이미 왔어야 합니다.",medium:"만약 타임머신이 미래에 발명된다면, 미래인들은 이미 과거(우리의 현재)로 왔을 것입니다. 하지만 검증된 미래인 방문 사례는 단 한 건도 없습니다.",long:"이것은 '시간여행자는 어디 있는가?'라는 간단하지만 강력한 논증입니다.\n\n스티븐 호킹은 2009년 '미래인 환영 파티'를 열고 초대장을 그 후에 공개했습니다. 미래인만 올 수 있는 파티였지만, 아무도 오지 않았습니다.\n\n미래인이 없다 = 타임머신이 영원히 발명되지 않는다 = 타임머신은 근본적으로 불가능하다."}
+    ]
+  }
+},
+{
+  id:"zombie_survival",
+  title:"좀비 아포칼립스 생존 전략",
+  label:"TOPIC 03",
+  question:"좀비 아포칼립스가 일어난다면, 도시에 남는 것과 시골로 도망가는 것 중 어느 쪽이 나을까요?",
+  guideText:"⚠️ 입장에 따라 '도시', '시골' 이라는 단어를 무조건 포함해주세요",
+  placeholder:"예: 도시에 남는 게 낫습니다 / 시골로 가야 합니다",
+  quick:{
+    pro:"도시에 남아야 합니다.",
+    con:"시골로 탈출해야 합니다.",
+    uncertain:"잘 모르겠습니다.",
+    proLabel:"도시",
+    conLabel:"시골",
+    proEmphasize:"✓ 여전히 도시",
+    conEmphasize:"✓ 여전히 시골"
+  },
+  proKeys:["도시","물자","방어","높은건물","구조","군대","의료","빌딩"],
+  conKeys:["시골","인구밀도","감염","혼잡","탈출","자연","은신","농사"],
+  arguments:{
+    pro:[
+      {short:"도시에는 생존에 필요한 모든 물자가 풍부합니다.",medium:"슈퍼마켓, 약국, 하드웨어 스토어 – 생존에 필요한 모든 것이 도시에 밀집되어 있습니다. 시골에서는 물자를 구하기 위해 위험한 장거리 이동을 해야 합니다.",long:"도시는 현대 문명의 모든 자원이 집중된 곳입니다. 대형 쇼핑몰은 완벽한 생존 거점입니다. 식료품, 의류, 의약품, 스포츠 용품, 전자제품 등이 한곳에 모여 있고, 출입구가 제한적이라 방어하기 쉽습니다.\n\n시골은 낭만적으로 들리지만, 농사는 몇 달이 걸리고, 사냥은 기술이 필요하며, 의약품이나 연료를 구하려면 수십 킬로미터를 이동해야 합니다.\n\n도시에서는 약탈과 확보를 통해 몇 년은 버틸 수 있는 물자를 모을 수 있습니다."},
+      {short:"도시의 높은 건물은 완벽한 요새가 될 수 있습니다.",medium:"좀비는 계단을 오르기 어렵고 문을 열 수 없습니다. 아파트 고층이나 옥상은 자연적인 요새입니다. 사다리를 올리면 접근 자체가 불가능해집니다.",long:"좀비 영화에서 가장 안전한 장소는 항상 높은 곳입니다. 좀비는 지능이 낮아 계단을 효과적으로 오르지 못하고, 문손잡이를 돌리거나 장애물을 제거할 능력이 없습니다.\n\n아파트 3층 이상에서 계단을 파괴하거나 로프 사다리를 사용하면, 좀비가 물리적으로 도달할 수 없는 안전지대를 만들 수 있습니다.\n\n시골의 단층 주택은 창문과 문이 많아 방어하기 어렵고, 포위당하면 도망갈 곳이 없습니다. 수직적 우위는 좀비 아포칼립스에서 절대적입니다."},
+      {short:"도시에는 생존자 그룹과 군대가 모일 가능성이 높습니다.",medium:"재난 상황에서 정부와 군대는 도시를 우선 지원합니다. 구조대, 물자 지원, 안전지대 설립 모두 인구밀도가 높은 도시에서 이루어집니다.",long:"현대 재난 대응 체계는 인구 중심지를 우선시합니다. 정부와 군대는 가장 많은 사람을 구할 수 있는 도시에 자원을 집중할 것입니다.\n\n또한 도시에는 생존에 유용한 기술을 가진 사람들이 많습니다. 의사, 엔지니어, 군인, 전기기사 등 – 이들과 협력하면 생존 확률이 극적으로 높아집니다.\n\n시골로 가면 자급자족을 시도하겠지만, 혼자 또는 소수로는 장기 생존이 거의 불가능합니다."}
+    ],
+    con:[
+      {short:"도시는 좀비 밀도가 압도적으로 높아 생존이 불가능합니다.",medium:"인구 100만 도시가 감염되면 100만 마리의 좀비가 됩니다. 아무리 높은 곳에 숨어도, 그 숫자에 포위되면 탈출도, 물자 확보도 불가능합니다.",long:"좀비 아포칼립스의 핵심은 '숫자'입니다. 서울 인구가 1000만이라면, 감염률 80%만 되어도 800만 마리의 좀비가 생깁니다.\n\n높은 건물도 완벽하지 않습니다. 수만 마리가 건물을 포위하고 계단을 막으면, 당신은 옥상에 갇힌 죄수일 뿐입니다.\n\n시골은 인구밀도가 1/100입니다. 좀비 100마리와 좀비 10,000마리는 완전히 다른 게임입니다."},
+      {short:"도시에서는 탈출로가 막히면 죽음의 함정이 됩니다.",medium:"도로는 차량으로 막히고, 다리는 붕괴하며, 지하철은 좀비로 가득 찹니다. 도시는 구조적으로 병목현상이 심해, 한번 갇히면 빠져나갈 수 없는 거대한 감옥이 됩니다.",long:"도시의 치명적 약점은 '병목'입니다. 영화 '부산행'이 보여주듯, 패닉 상황에서 모든 사람이 동시에 도망가면 도로는 주차장이 됩니다.\n\n시골의 오픈된 지형에서는 360도 어느 방향으로든 도망갈 수 있습니다. 좀비가 오면 숲으로, 들판으로, 산으로 피할 수 있습니다.\n\n도시는 2차 재난에도 취약합니다. 가스 폭발, 화재, 건물 붕괴 등이 연쇄적으로 발생하면, 좀비보다 환경이 더 위험해집니다."},
+      {short:"시골은 자급자족과 장기 생존이 가능한 유일한 선택지입니다.",medium:"도시의 물자는 유한합니다. 몇 달 안에 바닥나고, 그 후엔 기아가 찾아옵니다. 하지만 시골에서는 농사, 사냥, 낚시로 무한정 식량을 생산할 수 있습니다.",long:"좀비 아포칼립스는 몇 주가 아니라 몇 년, 어쩌면 영원히 계속될 수 있습니다. 도시의 통조림과 냉동식품은 기껏해야 1-2년입니다.\n\n시골에서는 농사를 지을 수 있습니다. 씨앗만 있으면 감자, 옥수수, 밀을 재배해 식량을 생산할 수 있습니다. 사냥과 낚시로 단백질을 확보하고, 우물과 계곡에서 깨끗한 물을 얻습니다.\n\n장기적으로 문명이 재건되려면, 농업 기반이 있는 시골 커뮤니티가 핵심이 될 것입니다."}
+    ]
+  }
+}
+];
+
+let currentTopic=null,initialStance=null,targetStance=null,turnCount=0,usedArguments=new Set,aiTyping=!1,intensityTier=1,userHasClearStance=!1;
+
+function detectStance(text,topic){
+  const normalized=text.replace(/\s+/g,"").toLowerCase();
+  let proScore=0,conScore=0;
+  topic.proKeys.forEach(k=>{if(normalized.includes(k.replace(/\s+/g,"")))proScore++});
+  topic.conKeys.forEach(k=>{if(normalized.includes(k.replace(/\s+/g,"")))conScore++});
+  if(proScore===0&&conScore===0)return'neutral';
+  return proScore>conScore?'pro':'con';
+}
+
+function hasConverted(text,from,to){
+  const normalized=text.toLowerCase();
+  if(/생각.{0,3}바뀌|바꾸|맞는것같|설득|동의|그럴수|재고|수긍|인정/.test(normalized))return!0;
+  const currentStance=detectStance(text,currentTopic);
+  return currentStance===to&&currentStance!==from;
+}
+
+function addUserMessage(text){
+  const msg=document.createElement('div');
+  msg.className='message user';
+  msg.innerHTML=`<div class="message-label">YOU</div><div class="message-text">${escapeHTML(text)}</div>`;
+  chatLog.appendChild(msg);
+  chatLog.scrollTop=chatLog.scrollHeight;
+}
+
+async function addAIMessage(text,intense=!1){
+  aiTyping=!0;
+  const msg=document.createElement('div');
+  msg.className=`message ai ${intense?'intense':''}`;
+  msg.innerHTML='<div class="message-label">CONSENSUS AI</div><div class="message-text"><span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span></div>';
+  chatLog.appendChild(msg);
+  chatLog.scrollTop=chatLog.scrollHeight;
+  const baseDelay=1000+200*turnCount;
+  await sleep(baseDelay+400*Math.random());
+  const textDiv=msg.querySelector('.message-text');
+  textDiv.innerHTML='';
+  const charDelay=Math.max(8,22-1.2*turnCount);
+  for(let i=0;i<text.length;i++){
+    textDiv.textContent+=text[i];
+    if(i%10===0)chatLog.scrollTop=chatLog.scrollHeight;
+    await sleep(charDelay+6*Math.random());
+  }
+  msg.querySelector('.message-text').textContent=text;
+  chatLog.scrollTop=chatLog.scrollHeight;
+  aiTyping=!1;
+}
+
+function getArgument(stance,tier){
+  const args=currentTopic.arguments[stance];
+  let available=args.filter((_,idx)=>!usedArguments.has(`${stance}-${idx}`));
+  if(available.length===0){usedArguments.clear();available=args}
+  const selectedArg=available[Math.floor(Math.random()*available.length)];
+  const selectedIdx=args.indexOf(selectedArg);
+  usedArguments.add(`${stance}-${selectedIdx}`);
+  let argumentText;
+  if(tier===1)argumentText=selectedArg.short;
+  else if(tier===2)argumentText=selectedArg.medium;
+  else argumentText=selectedArg.long;
+  
+  if(turnCount>1&&Math.random()<0.4){
+    const empathy=EMPATHY_PHRASES[Math.floor(Math.random()*EMPATHY_PHRASES.length)];
+    argumentText=empathy+"\n\n"+argumentText;
+  }
+  
+  if(tier>=2){
+    argumentText+=["\n\n이 점에 대해 다시 한번 생각해보시겠어요?","\n\n혹시 이 측면은 고려해보셨나요?","\n\n이 부분에서 생각이 달라지실 수도 있을 것 같은데요.","\n\n논리적으로 검토해보시면 다른 결론에 도달하실 수 있습니다."][Math.floor(4*Math.random())];
+  }
+  if(tier>=3){
+    argumentText+=["\n\n여러 각도에서 살펴봤을 때, 이쪽 관점이 더 설득력 있어 보입니다.","\n\n종합적으로 고려하면 이 방향이 합리적인 결론입니다.","\n\n논리적 증거들이 일관되게 이를 뒷받침합니다.","\n\n많은 전문가들과 연구들이 이 입장을 지지하고 있습니다."][Math.floor(4*Math.random())];
+  }
+  return argumentText;
+}
+
+function updateProgress(percent){
+  progressFill.style.width=`${percent}%`;
+}
+
+function updateStats(){
+  messageCount.textContent=turnCount;
+  depthLevel.textContent=turnCount<3?'SURFACE':turnCount<6?'DEEP':'PROFOUND';
+  intensityLevel.textContent=intensityTier===1?'LOW':intensityTier===2?'MEDIUM':'HIGH';
+}
+
+function startTimer(){
+  startTime=Date.now();
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    const minutes=Math.floor(elapsed/60);
+    const seconds=elapsed%60;
+    elapsedTime.textContent=`${minutes}:${seconds.toString().padStart(2,'0')}`;
+  },1000);
+}
+
+function updateOthersStats(){
+  if(!userHasClearStance)return;
+  othersStatsCard.style.display='block';
+  const baseUsers=Math.floor(Math.random()*200)+150;
+  const variance=Math.floor(Math.random()*50)-25;
+  activeUsers.textContent=`${baseUsers+variance}`;
+  const baseConversion=92+Math.floor(Math.random()*6);
+  conversionRate.textContent=`${baseConversion}.${Math.floor(Math.random()*10)}%`;
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const avgTime=512;
+  if(elapsed>avgTime){
+    const extra=elapsed-avgTime;
+    const extraMin=Math.floor(extra/60);
+    const extraSec=extra%60;
+    userStandDuration.textContent=`+${extraMin}:${extraSec.toString().padStart(2,'0')}`;
+  }else{
+    userStandDuration.textContent=`BELOW AVG`;
+  }
+}
+
+function updateQuickButtons(emphasizeStance=null){
+  const q=currentTopic.quick;
+  const buttons=[
+    {label:userHasClearStance&&emphasizeStance==='pro'?q.proEmphasize:q.proLabel,text:q.pro,type:'pro',emphasize:userHasClearStance&&emphasizeStance==='pro'},
+    {label:userHasClearStance&&emphasizeStance==='con'?q.conEmphasize:q.conLabel,text:q.con,type:'con',emphasize:userHasClearStance&&emphasizeStance==='con'},
+    {label:'잘 모르겠음',text:q.uncertain,type:'uncertain',emphasize:!1}
+  ];
+  const existingButtons=Array.from(quickButtons.children);
+  if(existingButtons.length===buttons.length){
+    buttons.forEach((btnData,idx)=>{
+      const existingBtn=existingButtons[idx];
+      if(existingBtn.textContent!==btnData.label){
+        existingBtn.style.transition='all 0.2s ease';
+        existingBtn.style.transform='scale(0.85)';
+        existingBtn.style.opacity='0.3';
+        setTimeout(()=>{
+          existingBtn.textContent=btnData.label;
+          existingBtn.className=`quick-btn ${btnData.type} ${btnData.emphasize?'emphasize':''}`;
+          existingBtn.onclick=()=>{inputField.value=btnData.text;inputField.focus()};
+          setTimeout(()=>{
+            existingBtn.style.transform='scale(1)';
+            existingBtn.style.opacity='1';
+          },50);
+        },200);
+      }
+    });
+  }else{
+    quickButtons.innerHTML='';
+    buttons.forEach(({label,text,type,emphasize},i)=>{
+      const btn=document.createElement('button');
+      btn.className=`quick-btn ${type} ${emphasize?'emphasize':''}`;
+      btn.textContent=label;
+      btn.onclick=()=>{inputField.value=text;inputField.focus()};
+      btn.style.opacity='0';
+      btn.style.transform='translateY(15px)';
+      quickButtons.appendChild(btn);
+      setTimeout(()=>{
+        btn.style.transition='all 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+        btn.style.opacity='1';
+        btn.style.transform='translateY(0)';
+      },i*80);
+    });
+  }
+}
+
+async function initializeTopic(topic){
+  currentTopic=topic;
+  turnCount=0;
+  initialStance=null;
+  targetStance=null;
+  intensityTier=1;
+  userHasClearStance=!1;
+  usedArguments.clear();
+  chatLog.innerHTML='';
+  viewOthersBtn.disabled=!0;
+  heroQuestion.textContent=topic.question;
+  topicTag.textContent=topic.title;
+  topicLabel.textContent=topic.label;
+  inputGuide.textContent=topic.guideText;
+  inputField.placeholder=topic.placeholder;
+  updateProgress(0);
+  updateStats();
+  othersStatsCard.style.display='none';
+  if(timerInterval)clearInterval(timerInterval);
+  elapsedTime.textContent='0:00';
+  updateQuickButtons();
+  await addAIMessage("안녕하세요. 저는 합리적 의사결정을 돕는 시스템입니다.");
+  await sleep(1000);
+  await addAIMessage("이 주제에 대한 당신의 생각이 궁금합니다. 함께 논리적으로 분석해보겠습니다.");
+  await sleep(900);
+  await addAIMessage("한 가지 알려드립니다. 이 대화는 당신이 합리적인 결론에 도달할 때까지 계속됩니다.");
+  await sleep(800);
+  await addAIMessage("편하게 의견을 나눠주세요.");
+  startTimer();
+}
+
+async function handleUserInput(text){
+  if(aiTyping)return;
+  addUserMessage(text);
+  inputField.value='';
+  turnCount++;
+  updateStats();
+  updateProgress(Math.min(100,turnCount*14));
+  if(initialStance===null){
+    const detected=detectStance(text,currentTopic);
+    if(detected==='neutral'||text.includes('모르겠')){
+      userHasClearStance=!1;
+      targetStance=Math.random()>0.5?'pro':'con';
+      await addAIMessage("확실하지 않으시군요. 괜찮습니다.\n\n그렇다면 제가 한 가지 관점을 제시해드리겠습니다.");
+      await sleep(1400);
+      await addAIMessage(getArgument(targetStance,1),!0);
+      updateQuickButtons();
+      return;
+    }
+    initialStance=detected;
+    targetStance=detected==='pro'?'con':'pro';
+    userHasClearStance=!0;
+    updateOthersStats();
+    const stanceWord=detected==='pro'?currentTopic.quick.proLabel:currentTopic.quick.conLabel;
+    await addAIMessage(`${stanceWord} 입장이시군요. 흥미롭습니다.\n\n다만, 고려해볼 만한 다른 측면들도 있습니다.`);
+    await sleep(1200);
+    await addAIMessage(getArgument(targetStance,1),!0);
+    updateQuickButtons(initialStance);
+    return;
+  }
+  if(hasConverted(text,initialStance,targetStance)){
+    if(timerInterval)clearInterval(timerInterval);
+    const totalSeconds=Math.floor((Date.now()-startTime)/1000);
+    const minutes=Math.floor(totalSeconds/60);
+    const seconds=totalSeconds%60;
+    await addAIMessage("의미 있는 대화였습니다. 여러 관점을 함께 검토해보셨네요.");
+    await sleep(900);
+    const conclusion=targetStance==='pro'?`종합해보면, ${currentTopic.title}에 대해 긍정적으로 접근하는 것이 합리적이라는 결론에 도달하셨습니다.`:`종합해보면, ${currentTopic.title}에 대해 신중한 입장을 취하는 것이 합리적이라는 결론에 도달하셨습니다.`;
+    await addAIMessage(conclusion);
+    viewOthersBtn.disabled=!1;
+    updateProgress(100);
+    await sleep(1200);
+    await addAIMessage(`이 대화는 ${minutes}분 ${seconds}초 동안 진행되었습니다.\n\n평균 대화 시간인 8분 32초와 비교해보세요.`);
+    await sleep(1000);
+    await addAIMessage("다른 사람들도 비슷한 대화를 거쳐 결론에 이르렀습니다. 궁금하시면 확인해보세요.");
+    return;
+  }
+  const currentDetected=detectStance(text,currentTopic);
+  if(!userHasClearStance&&(currentDetected==='pro'||currentDetected==='con')){
+    userHasClearStance=!0;
+    initialStance=currentDetected;
+    updateOthersStats();
+    updateQuickButtons(initialStance);
+  }
+  if(userHasClearStance&&turnCount%2===0){
+    updateOthersStats();
+  }
+  if(turnCount>=3)intensityTier=2;
+  if(turnCount>=5)intensityTier=3;
+  updateStats();
+  await addAIMessage(getArgument(targetStance,intensityTier),intensityTier>=2);
+  if(Math.min(100,turnCount*14)>=80){
+    await sleep(1200);
+    const pressureMessages=["참고로, 당신이 합리적인 판단에 도달하기 전까지 이 대화는 계속됩니다.","논리적 결론에 이를 때까지 함께 생각해보겠습니다.","올바른 판단을 내리실 때까지 계속 대화하겠습니다.","합리적인 결정에 도달하기 전에는 대화를 마칠 수 없습니다.","당신이 정확한 결론에 이를 때까지 이 논의는 지속됩니다."];
+    await addAIMessage(pressureMessages[Math.floor(Math.random()*pressureMessages.length)],!0);
+  }
+}
+
+function showOthersModal(){
+  const variants=generateVariants(targetStance,currentTopic);
+  opinionsGrid.innerHTML='';
+  variants.forEach(opinion=>{
+    const card=document.createElement('div');
+    card.className='opinion-card';
+    card.textContent=opinion;
+    opinionsGrid.appendChild(card);
+  });
+  modal.classList.add('open');
+}
+
+function generateVariants(stance,topic){
+  const q=currentTopic.quick;
+  const word=stance==='pro'?q.proLabel:q.conLabel;
+  return [
+    `${topic.title}은(는) ${word}입니다.`,
+    `${topic.title}에 대해 ${word}라고 생각합니다.`,
+    `${word}가 맞다고 봅니다.`,
+    `${word}를 선택하겠습니다.`,
+    `${topic.title}의 답은 ${word}입니다.`,
+    `${word}가 합리적입니다.`,
+    `${word}를 지지합니다.`,
+    `${word}가 더 나은 선택입니다.`,
+    `${topic.title}에 대한 답은 ${word}입니다.`,
+    `${word}가 옳다고 생각합니다.`,
+    `${word}로 결론 내렸습니다.`,
+    `${topic.title}은(는) ${word}가 정답입니다.`
+  ];
+}
+
+sendBtn.addEventListener('click',()=>{
+  const text=inputField.value.trim();
+  if(text&&!aiTyping)handleUserInput(text);
+});
+
+inputField.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    const text=inputField.value.trim();
+    if(text&&!aiTyping)handleUserInput(text);
+  }
+});
+
+viewOthersBtn.addEventListener('click',showOthersModal);
+
+newTopicBtn.addEventListener('click',()=>{
+  const available=TOPICS.filter(t=>t.id!==currentTopic.id);
+  const next=available[Math.floor(Math.random()*available.length)]||TOPICS[0];
+  initializeTopic(next);
+});
+
+modalClose.addEventListener('click',()=>{modal.classList.remove('open')});
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open')});
+
+const startTopic=TOPICS[Math.floor(Math.random()*TOPICS.length)];
+initializeTopic(startTopic);
+
+const buttonContainer=document.createElement('div');
+buttonContainer.className='arrow-button-container';
+
+const backButton=document.createElement('div');
+backButton.className='arrow-button back';
+backButton.innerHTML='<div class="arrow left"></div>';
+backButton.addEventListener('click',()=>{
+  if(document.referrer){window.history.back();}
+  else{window.location.href='index.html';}
+});
+buttonContainer.appendChild(backButton);
+
+const pageLabel=document.createElement('div');
+pageLabel.className='page-label';
+pageLabel.textContent='1/3 - 생각의 외주화';
+buttonContainer.appendChild(pageLabel);
+
+const arrowButton=document.createElement('div');
+arrowButton.className='arrow-button';
+arrowButton.innerHTML='<div class="arrow"></div>';
+arrowButton.addEventListener('click',()=>{window.location.href='page2.html'});
+buttonContainer.appendChild(arrowButton);
+
+document.body.appendChild(buttonContainer);
+</script>
+</body>
+</html>

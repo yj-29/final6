@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Entrainment</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Noto+Sans+KR:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+            background: #000;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .title-container {
+            position: absolute;
+            top: 50px;
+            left: 60px;
+            max-width: 450px;
+        }
+
+        .main-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #8fffbb;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            animation: fadeIn 2s;
+        }
+        
+        .title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1em;
+            font-weight: 400;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            animation: fadeIn 2s;
+        }
+        
+        .title-highlight {
+            color: #8fffbb;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: auto;
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 0;
+            border: 2px solid #8fffbb;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: #8fffbb;
+            transition: all 0.3s;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+        
+        .mic-button::before {
+            content: 'START';
+            font-size: 0.5em;
+        }
+        
+        .mic-button:hover {
+            background: #8fffbb;
+            color: #000;
+        }
+        
+        .mic-button.active {
+            background: #8fffbb;
+            color: #000;
+            animation: none;
+        }
+        
+        .mic-button.active::before {
+            content: 'REC';
+        }
+        
+        @keyframes recordPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .timer {
+            position: absolute;
+            bottom: 250px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 8em;
+            font-weight: 700;
+            color: #8fffbb;
+            opacity: 0;
+            transition: opacity 0.3s;
+            line-height: 1;
+        }
+        
+        .timer.show {
+            opacity: 0.3;
+        }
+        
+        .status {
+            position: absolute;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 1em;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 400px;
+            font-weight: 400;
+        }
+        
+        .status.show {
+            opacity: 1;
+        }
+        
+        .phase-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8em;
+            color: #8fffbb;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+        
+        .phase-indicator.show {
+            opacity: 1;
+        }
+        
+        .description {
+            position: absolute;
+            top: calc(50% + 80px);
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s;
+            max-width: 600px;
+            line-height: 1.8;
+            font-weight: 400;
+        }
+        
+        .description.show {
+            opacity: 1;
+        }
+        
+        .sync-meter {
+            position: absolute;
+            top: 60px;
+            right: 60px;
+            width: 200px;
+            padding: 20px;
+            background: transparent;
+            border: 1px solid rgba(143, 255, 187, 0.3);
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+        
+        .sync-meter.show {
+            opacity: 1;
+        }
+        
+        .meter-title {
+            font-size: 0.75em;
+            margin-bottom: 15px;
+            opacity: 0.6;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 400;
+        }
+        
+        .meter-value {
+            font-size: 3em;
+            font-weight: 700;
+            color: #8fffbb;
+            transition: color 0.5s;
+            line-height: 1;
+        }
+        
+        .meter-bar {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            background: #8fffbb;
+            width: 0%;
+            transition: width 0.5s, background 0.5s;
+        }
+        
+        .final-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 2.2em;
+            font-weight: 500;
+            color: #fff;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 2s;
+            max-width: 80%;
+            line-height: 1.6;
+            letter-spacing: 1px;
+        }
+        
+        .final-message.show {
+            opacity: 1;
+        }
+
+        .info-top {
+            position: absolute;
+            top: 60px;
+            right: 280px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75em;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: right;
+            line-height: 1.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .arrow-button {
+            position: static;
+            width: 70px;
+            height: 70px;
+            border: 2px solid #8fffbb;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(143, 255, 187, 0.2);
+        }
+
+        .arrow-button.back {
+            position: static;
+            transform: none;
+        }
+
+        .arrow-button-container {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            padding: 20px 30px;
+            background: rgba(15, 15, 15, 0.9);
+            border-radius: 12px;
+            border: 1px solid rgba(143, 255, 187, 0.3);
+        }
+        
+        .arrow-button-container.single-button {
+            gap: 20px;
+            justify-content: flex-start;
+        }
+
+        .arrow-button:hover {
+            background: #8fffbb;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(143, 255, 187, 0.4);
+        }
+
+        .arrow-button:hover .arrow {
+            border-color: #0a0a0a;
+        }
+
+        .arrow {
+            width: 22px;
+            height: 22px;
+            border-right: 3px solid #8fffbb;
+            border-top: 3px solid #8fffbb;
+            transform: rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+
+        .arrow.left {
+            transform: rotate(-135deg);
+        }
+
+        .page-label {
+            font-size: 14px;
+            color: #8fffbb;
+            font-weight: 800;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            font-family: 'Space Grotesk', sans-serif;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(143, 255, 187, 0.5);
+        }
+        
+        .arrow-button-container.single-button .page-label {
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .title-container {
+                left: 30px;
+                right: 30px;
+                max-width: calc(100% - 60px);
+            }
+
+            .main-title {
+                font-size: 1em;
+            }
+            
+            .title {
+                font-size: 0.85em;
+            }
+            
+            .timer {
+                font-size: 5em;
+                bottom: 200px;
+            }
+            
+            .sync-meter {
+                right: 30px;
+                top: 30px;
+                width: 150px;
+                padding: 15px;
+            }
+            
+            .controls {
+                bottom: 80px;
+            }
+            
+            .status {
+                bottom: 180px;
+                font-size: 0.9em;
+            }
+            
+            .info-top {
+                right: 30px;
+                top: 30px;
+                font-size: 0.65em;
+            }
+
+            .page-label {
+                right: 30px;
+                bottom: 30px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="overlay">
+        <div class="title-container">
+            <div class="main-title">Voice Entrainment</div>
+            <div class="title">
+                <span class="title-highlight">개인의 고유한 생각</span>이<br>
+                <span class="title-highlight">집단의 리듬</span>에 흡수되어<br>
+                <span class="title-highlight">구별할 수 없게 되는</span> 과정
+            </div>
+        </div>
+        
+        <div class="phase-indicator" id="phaseIndicator"></div>
+        <div class="description" id="description"></div>
+        
+        <div class="sync-meter" id="syncMeter">
+            <div class="meter-title">Sync Level</div>
+            <div class="meter-value" id="syncValue">0%</div>
+            <div class="meter-bar">
+                <div class="meter-fill" id="syncBar"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="mic-button" id="micButton"></button>
+        </div>
+        
+        <div class="timer" id="timer">10</div>
+        <div class="status" id="status">시작 버튼을 눌러 당신의 생각을 자유롭게 녹음하세요</div>
+        
+        <div class="info-top">
+            Voice<br>
+            Entrainment<br>
+            Project<br>
+            <br>
+            2025
+        </div>
+        
+        <div class="final-message" id="finalMessage">
+            당신은 여전히,<br>스스로의 생각을 지키고 있나요?
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const micButton = document.getElementById('micButton');
+        const timer = document.getElementById('timer');
+        const status = document.getElementById('status');
+        const phaseIndicator = document.getElementById('phaseIndicator');
+        const description = document.getElementById('description');
+        const syncMeter = document.getElementById('syncMeter');
+        const syncValue = document.getElementById('syncValue');
+        const syncBar = document.getElementById('syncBar');
+        const finalMessage = document.getElementById('finalMessage');
+        
+        let audioContext, analyser, microphone, dataArray;
+        let isRecording = false;
+        let isPlaying = false;
+        let recordingTime = 0;
+        let recordingDuration = 10;
+        let startTime = 0;
+        let playbackTime = 0;
+        
+        let recordedData = [];
+        let otherVoices = [];
+        let synchronization = 0;
+        let currentPhase = 0;
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        function playVoiceSample(frequency, duration, pan) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const panNode = audioContext.createStereoPanner();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            panNode.pan.setValueAtTime(pan, audioContext.currentTime);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(panNode);
+            panNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        async function initAudio() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 4096;
+                analyser.smoothingTimeConstant = 0.8;
+                
+                microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                isRecording = true;
+                startTime = Date.now();
+                micButton.classList.add('active');
+                timer.classList.add('show');
+                status.textContent = '당신의 목소리를 녹음하고 있습니다...';
+                status.classList.add('show');
+                
+                recordLoop();
+                
+            } catch (error) {
+                console.error('마이크 접근 오류:', error);
+                status.textContent = '마이크 접근이 거부되었습니다';
+                status.classList.add('show');
+            }
+        }
+        
+        function recordLoop() {
+            if (!isRecording) return;
+            requestAnimationFrame(recordLoop);
+            
+            recordingTime = (Date.now() - startTime) / 1000;
+            const remaining = Math.ceil(recordingDuration - recordingTime);
+            timer.textContent = remaining > 0 ? remaining : 0;
+            
+            analyser.getByteTimeDomainData(dataArray);
+            recordedData.push(new Uint8Array(dataArray));
+            
+            drawRecording();
+            
+            if (recordingTime >= recordingDuration) {
+                isRecording = false;
+                isPlaying = true;
+                currentPhase = 1;
+                playbackTime = 0;
+                timer.classList.remove('show');
+                status.classList.remove('show');
+                micButton.classList.remove('active');
+                micButton.style.display = 'none';
+                
+                phaseIndicator.textContent = '당신의 고유 생각 파형';
+                phaseIndicator.classList.add('show');
+                description.textContent = '이것이 당신만의 독특한 목소리입니다';
+                description.classList.add('show');
+                
+                createOtherVoices();
+                
+                setTimeout(() => {
+                    currentPhase = 2;
+                    phaseIndicator.textContent = '다른 목소리들이 나타납니다';
+                    description.textContent = '현대 사회는 수많은 목소리로 가득합니다';
+                    syncMeter.classList.add('show');
+                    
+                    otherVoices.forEach((voice, i) => {
+                        setTimeout(() => {
+                            playVoiceSample(200 + Math.random() * 400, 0.5, voice.pan);
+                        }, i * 200);
+                    });
+                }, 5000);
+                
+                setTimeout(() => {
+                    currentPhase = 3;
+                    phaseIndicator.textContent = '동조화가 시작됩니다';
+                    description.textContent = '당신의 목소리가 점점 작아지고 있습니다';
+                }, 10000);
+                
+                setTimeout(() => {
+                    currentPhase = 4;
+                    phaseIndicator.textContent = '완전한 통합';
+                    description.textContent = '모든 목소리가 하나가 됩니다';
+                }, 20000);
+                
+                setTimeout(() => {
+                    phaseIndicator.classList.remove('show');
+                    description.classList.remove('show');
+                    syncMeter.classList.remove('show');
+                    finalMessage.classList.add('show');
+                }, 27000);
+                
+                playbackLoop();
+            }
+        }
+        
+        // 예술적인 파형 그리기 (녹음 중)
+        function drawRecording() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerY = canvas.height / 2;
+            const width = canvas.width;
+            const time = recordingTime;
+            
+            // 여러 레이어의 복합적인 파형
+            for (let layer = 0; layer < 3; layer++) {
+                ctx.shadowBlur = 25 - layer * 8;
+                ctx.shadowColor = '#8fffbb';
+                
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(143, 255, 187, ${0.6 - layer * 0.15})`;
+                ctx.lineWidth = 3 - layer * 0.5;
+                
+                for (let i = 0; i < dataArray.length; i += 2) {
+                    const x = (i / dataArray.length) * width;
+                    const v = (dataArray[i] - 128) / 128.0;
+                    
+                    // 복합적인 변형
+                    const twist = Math.sin(x * 0.005 + time * 2 + layer * 0.5) * 40;
+                    const turbulence = Math.sin(x * 0.02 + time * 3) * 20;
+                    const breathing = Math.sin(time * 1.5) * 30;
+                    
+                    const y = centerY + v * (280 + breathing + twist) + turbulence * (1 - layer * 0.3);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        const prevX = ((i - 2) / dataArray.length) * width;
+                        const prevV = (dataArray[i - 2] - 128) / 128.0;
+                        const prevTwist = Math.sin(prevX * 0.005 + time * 2 + layer * 0.5) * 40;
+                        const prevTurbulence = Math.sin(prevX * 0.02 + time * 3) * 20;
+                        const prevY = centerY + prevV * (280 + breathing + prevTwist) + prevTurbulence * (1 - layer * 0.3);
+                        
+                        // 베지어 곡선으로 부드럽게
+                        const cpX = (prevX + x) / 2;
+                        const cpY = (prevY + y) / 2;
+                        ctx.quadraticCurveTo(cpX, cpY, x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        function createOtherVoices() {
+            const count = 40;
+            for (let i = 0; i < count; i++) {
+                otherVoices.push({
+                    frequency: 0.3 + Math.random() * 4,
+                    amplitude: 60 + Math.random() * 120,
+                    phase: Math.random() * Math.PI * 2,
+                    phaseSpeed: 0.01 + Math.random() * 0.08,
+                    opacity: 0.2 + Math.random() * 0.5,
+                    yOffset: (Math.random() - 0.5) * 300,
+                    hue: 300 + Math.random() * 60,
+                    pan: (Math.random() - 0.5) * 2,
+                    glowIntensity: 10 + Math.random() * 20,
+                    twistFactor: Math.random() * 2,
+                    breathRate: 0.5 + Math.random() * 2
+                });
+            }
+        }
+        
+        function playbackLoop() {
+            if (!isPlaying) return;
+            requestAnimationFrame(playbackLoop);
+            
+            playbackTime += 0.016;
+            
+            const totalTime = playbackTime;
+            
+            if (totalTime < 5) {
+                synchronization = 0;
+            } else if (totalTime < 10) {
+                synchronization = (totalTime - 5) / 20;
+            } else if (totalTime < 20) {
+                synchronization = 0.25 + (totalTime - 10) / 22.5;
+            } else {
+                synchronization = 0.7 + Math.min((totalTime - 20) / 10, 0.3);
+            }
+            
+            synchronization = Math.min(synchronization, 1);
+            
+            const syncPercent = Math.round(synchronization * 100);
+            syncValue.textContent = syncPercent + '%';
+            syncBar.style.width = syncPercent + '%';
+            
+            if (synchronization < 0.3) {
+                syncValue.style.color = '#8fffbb';
+                syncBar.style.background = '#8fffbb';
+            } else if (synchronization < 0.7) {
+                const t = (synchronization - 0.3) / 0.4;
+                const hue = 120 - (t * 60);
+                syncValue.style.color = `hsl(${hue}, 100%, 75%)`;
+                syncBar.style.background = `hsl(${hue}, 100%, 75%)`;
+            } else {
+                const t = (synchronization - 0.7) / 0.3;
+                const hue = 60 - (t * 60);
+                syncValue.style.color = `hsl(${hue}, 100%, 75%)`;
+                syncBar.style.background = `hsl(${hue}, 100%, 75%)`;
+            }
+            
+            drawPlayback();
+        }
+        
+        // 예술적인 파형 그리기 (재생 중)
+        function drawPlayback() {
+            ctx.fillStyle = `rgba(0, 0, 0, ${currentPhase === 4 ? 0.02 : 0.06})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerY = canvas.height / 2;
+            const width = canvas.width;
+            
+            // 내 파형 (예술적 버전)
+            if (currentPhase >= 1 && currentPhase < 4) {
+                const frameIndex = Math.floor((playbackTime * 60) % recordedData.length);
+                const currentData = recordedData[frameIndex];
+                
+                if (currentData) {
+                    // 다층 레이어
+                    for (let layer = 0; layer < 3; layer++) {
+                        ctx.shadowBlur = (25 - layer * 8) * (1 - synchronization * 0.6);
+                        ctx.shadowColor = '#8fffbb';
+                        
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(143, 255, 187, ${(0.7 - layer * 0.15) * (1 - synchronization * 0.7)})`;
+                        ctx.lineWidth = (3.5 - layer * 0.5) * (1 - synchronization * 0.4);
+                        
+                        for (let i = 0; i < currentData.length; i += 2) {
+                            const x = (i / currentData.length) * width;
+                            const v = (currentData[i] - 128) / 128.0;
+                            
+                            // 예술적 변형
+                            const twist = Math.sin(x * 0.005 + playbackTime * 2 + layer * 0.5) * 40 * (1 - synchronization);
+                            const turbulence = Math.sin(x * 0.02 + playbackTime * 3) * 20 * (1 - synchronization * 0.8);
+                            const breathing = Math.sin(playbackTime * 1.5) * 30 * (1 - synchronization * 0.5);
+                            
+                            const amplitude = (280 + breathing + twist) * (1 - synchronization * 0.65);
+                            const y = centerY + v * amplitude + turbulence;
+                            
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                const prevX = ((i - 2) / currentData.length) * width;
+                                const prevV = (currentData[i - 2] - 128) / 128.0;
+                                const prevTwist = Math.sin(prevX * 0.005 + playbackTime * 2 + layer * 0.5) * 40 * (1 - synchronization);
+                                const prevTurbulence = Math.sin(prevX * 0.02 + playbackTime * 3) * 20 * (1 - synchronization * 0.8);
+                                const prevY = centerY + prevV * amplitude + prevTurbulence;
+                                
+                                const cpX = (prevX + x) / 2;
+                                const cpY = (prevY + y) / 2;
+                                ctx.quadraticCurveTo(cpX, cpY, x, y);
+                            }
+                        }
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+                }
+            }
+            
+            // 다른 목소리들 (예술적 버전)
+            if (currentPhase >= 2) {
+                otherVoices.forEach((voice) => {
+                    const targetFrequency = 1.2;
+                    voice.frequency += (targetFrequency - voice.frequency) * synchronization * 0.015;
+                    
+                    const time = playbackTime * voice.phaseSpeed;
+                    const targetPhase = playbackTime * 2;
+                    voice.phase += (targetPhase - voice.phase) * synchronization * 0.008;
+                    
+                    voice.yOffset *= (1 - synchronization * 0.015);
+                    
+                    voice.hue += (0 - voice.hue) * synchronization * 0.01;
+                    const saturation = 100 - (synchronization * 100);
+                    
+                    ctx.shadowBlur = voice.glowIntensity * (1 - synchronization * 0.5);
+                    ctx.shadowColor = `hsl(${voice.hue}, ${saturation}%, 50%)`;
+                    
+                    ctx.beginPath();
+                    const alpha = voice.opacity * (1 - synchronization * 0.4);
+                    ctx.strokeStyle = `hsla(${voice.hue}, ${saturation}%, 60%, ${alpha})`;
+                    ctx.lineWidth = (2.5 - synchronization * 1.2);
+                    
+                    const frameIndex = Math.floor((playbackTime * 60) % recordedData.length);
+                    const myData = recordedData[frameIndex];
+                    
+                    for (let i = 0; i < width; i += 3) {
+                        const x = i;
+                        const t = (i / width) * Math.PI * 2 * voice.frequency;
+                        
+                        // 복합 사인파 + 예술적 변형
+                        let sineValue = Math.sin(t + voice.phase + time);
+                        sineValue += Math.sin(t * 1.5 + voice.phase * 0.5) * 0.3;
+                        sineValue += Math.sin(t * 0.5 + time * 2) * 0.2;
+                        
+                        // 비선형 왜곡
+                        const distortion = Math.sin(x * 0.01 + time) * voice.twistFactor * (1 - synchronization);
+                        const breath = Math.sin(time * voice.breathRate) * 15 * (1 - synchronization);
+                        
+                        if (myData) {
+                            const dataIndex = Math.floor((i / width) * myData.length);
+                            const myValue = (myData[dataIndex] - 128) / 128.0;
+                            sineValue = sineValue * (1 - synchronization * 0.5) + myValue * synchronization * 0.5;
+                        }
+                        
+                        const finalAmplitude = voice.amplitude * (1 - synchronization * 0.6);
+                        const y = centerY + voice.yOffset + (sineValue * finalAmplitude) + distortion + breath;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            const prevX = i - 3;
+                            const prevT = (prevX / width) * Math.PI * 2 * voice.frequency;
+                            let prevSine = Math.sin(prevT + voice.phase + time);
+                            prevSine += Math.sin(prevT * 1.5 + voice.phase * 0.5) * 0.3;
+                            prevSine += Math.sin(prevT * 0.5 + time * 2) * 0.2;
+                            const prevDistortion = Math.sin(prevX * 0.01 + time) * voice.twistFactor * (1 - synchronization);
+                            const prevY = centerY + voice.yOffset + (prevSine * finalAmplitude) + prevDistortion + breath;
+                            
+                            const cpX = (prevX + x) / 2;
+                            const cpY = (prevY + y) / 2;
+                            ctx.quadraticCurveTo(cpX, cpY, x, y);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                });
+            }
+            
+            // Phase 4: 완전 통합 (예술적 단순화)
+            if (currentPhase === 4 && synchronization > 0.85) {
+                const frameIndex = Math.floor((playbackTime * 60) % recordedData.length);
+                const currentData = recordedData[frameIndex];
+                
+                if (currentData) {
+                    // 단일 레이어로 수렴
+                    ctx.shadowBlur = 30 * (synchronization - 0.8);
+                    ctx.shadowColor = 'rgba(200, 200, 200, 0.8)';
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(200, 200, 200, ${(synchronization - 0.7) * 2})`;
+                    ctx.lineWidth = 4;
+                    
+                    const avgAmplitude = 150 * (1.1 - synchronization);
+                    const simpleTwist = Math.sin(playbackTime * 1.5) * 20 * (1 - synchronization);
+                    
+                    for (let i = 0; i < currentData.length; i += 2) {
+                        const x = (i / currentData.length) * width;
+                        const v = (currentData[i] - 128) / 128.0;
+                        const y = centerY + v * avgAmplitude + simpleTwist;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            const prevX = ((i - 2) / currentData.length) * width;
+                            const prevV = (currentData[i - 2] - 128) / 128.0;
+                            const prevY = centerY + prevV * avgAmplitude + simpleTwist;
+                            
+                            const cpX = (prevX + x) / 2;
+                            const cpY = (prevY + y) / 2;
+                            ctx.quadraticCurveTo(cpX, cpY, x, y);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            }
+            
+            // 최종 페이드 아웃
+            if (synchronization > 0.95) {
+                ctx.fillStyle = `rgba(0, 0, 0, ${(synchronization - 0.95) * 15})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        micButton.addEventListener('click', () => {
+            if (!isRecording && !isPlaying) {
+                initAudio();
+            }
+        });
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'arrow-button-container single-button';
+
+        const backButton = document.createElement('div');
+        backButton.className = 'arrow-button back';
+        backButton.innerHTML = '<div class="arrow left"></div>';
+        backButton.addEventListener('click', () => {
+            window.location.href = 'page2.html';
+        });
+        buttonContainer.appendChild(backButton);
+
+        const pageLabel = document.createElement('div');
+        pageLabel.className = 'page-label';
+        pageLabel.textContent = '3/3 - 생각의 획일화';
+        buttonContainer.appendChild(pageLabel);
+
+        document.body.appendChild(buttonContainer);
+        
+        status.classList.add('show');
+    </script>
+</body>
+</html>

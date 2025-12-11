@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Mind - 집단 의식의 시각화</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'KakaoBigFont';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2503@1.0/KakaoBigSans-ExtraBold.woff2') format('woff2');
+            font-weight: 800;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'KakaoBigFont', sans-serif;
+            cursor: crosshair;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: all;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        #intro-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intro-content {
+            max-width: 900px;
+            padding: 60px;
+            text-align: center;
+            color: white;
+        }
+
+        .intro-content h1 {
+            font-size: 96px;
+            font-weight: 800;
+            letter-spacing: -3px;
+            margin-bottom: 30px;
+            color: #8fffbb;
+            line-height: 0.9;
+        }
+
+        .intro-content h2 {
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 0;
+            margin-bottom: 70px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+        }
+
+        .intro-steps {
+            text-align: left;
+            margin: 60px 0;
+            line-height: 1.8;
+        }
+
+        .intro-step {
+            margin: 20px 0;
+            padding: 24px 28px;
+            background: rgba(143, 255, 187, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #8fffbb;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            background: #8fffbb;
+            color: #0a0a0a;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
+            padding-top: 6px;
+        }
+
+        .start-button {
+            margin-top: 60px;
+            padding: 20px 60px;
+            background: #8fffbb;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: all;
+            font-family: 'KakaoBigFont', sans-serif;
+            display: inline-block;
+        }
+
+        .start-button:hover {
+            background: #a0ffcc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(143, 255, 187, 0.3);
+        }
+
+        #cooldown-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 28px 50px;
+            border-radius: 12px;
+            font-size: 16px;
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border: 2px solid #8fffbb;
+            font-weight: 400;
+        }
+
+        #cooldown-overlay.show {
+            opacity: 1;
+        }
+
+        #title {
+            position: absolute;
+            top: 50px;
+            left: 60px;
+            color: #8fffbb;
+            font-size: 72px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            animation: fadeIn 1.5s ease-out;
+            line-height: 0.85;
+        }
+
+        #subtitle {
+            position: absolute;
+            top: 185px;
+            left: 60px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            animation: fadeIn 1.5s ease-out 0.3s both;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 60px;
+            left: 60px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            text-align: left;
+            line-height: 1.8;
+            animation: fadeIn 1.5s ease-out 0.6s both;
+            font-weight: 400;
+            max-width: 500px;
+        }
+
+        #stats {
+            position: absolute;
+            top: 50px;
+            right: 60px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            font-family: 'BBH Sans Bartle', monospace;
+            text-align: right;
+            line-height: 1.4;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            color: #8fffbb;
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'KakaoBigFont', sans-serif;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+            display: block;
+        }
+
+        #quote-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 18px;
+            font-weight: 400;
+            text-align: center;
+            max-width: 600px;
+            opacity: 0;
+            pointer-events: none;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            line-height: 1.6;
+        }
+
+        #viral-message {
+            position: fixed;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: opacity 0.3s ease-out;
+        }
+
+        .message-bubble {
+            background: #007AFF;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 400;
+            max-width: 280px;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .message-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            background: #007AFF;
+            clip-path: polygon(0% 0%, 100% 0%, 0% 100%);
+        }
+
+        .viral-message-show {
+            opacity: 1 !important;
+        }
+
+        .quote-fade-in {
+            animation: quoteFadeIn 0.5s ease-out forwards;
+        }
+
+        .quote-fade-out {
+            animation: quoteFadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes quoteFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes quoteFadeOut {
+            from {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+        }
+
+        .viral-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: pulse 2s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        .viral-indicator.active {
+            opacity: 1;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.1;
+            }
+        }
+
+        #conformity-bar {
+            position: absolute;
+            bottom: 140px;
+            left: 60px;
+            width: 500px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #conformity-fill {
+            height: 100%;
+            background: #8fffbb;
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+
+        #conformity-label {
+            position: absolute;
+            bottom: 158px;
+            left: 60px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 400;
+        }
+
+        @media (max-width: 768px) {
+            #title {
+                font-size: 48px;
+                left: 30px;
+                top: 30px;
+            }
+            #subtitle {
+                font-size: 14px;
+                left: 30px;
+                top: 110px;
+                max-width: calc(100% - 60px);
+            }
+            #stats {
+                top: 30px;
+                right: 30px;
+                font-size: 11px;
+            }
+            .stat-value {
+                font-size: 24px;
+                margin-bottom: 16px;
+            }
+            #conformity-bar {
+                width: calc(100% - 60px);
+                left: 30px;
+                bottom: 120px;
+            }
+            #conformity-label {
+                left: 30px;
+                bottom: 135px;
+            }
+            #instructions {
+                font-size: 13px;
+                bottom: 40px;
+                left: 30px;
+                max-width: calc(100% - 60px);
+            }
+            .intro-content {
+                padding: 40px 30px;
+            }
+            .intro-content h1 {
+                font-size: 56px;
+            }
+            .intro-content h2 {
+                font-size: 16px;
+                margin-bottom: 40px;
+            }
+            .intro-step {
+                padding: 18px 20px;
+            }
+            .step-text {
+                font-size: 14px;
+            }
+        }
+
+        .arrow-button {
+            position: static;
+            width: 70px;
+            height: 70px;
+            border: 2px solid #8fffbb;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(143, 255, 187, 0.2);
+        }
+
+        .arrow-button.back {
+            position: static;
+            transform: none;
+        }
+
+        .arrow-button-container {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            padding: 20px 30px;
+            background: rgba(15, 15, 15, 0.9);
+            border-radius: 12px;
+            border: 1px solid rgba(143, 255, 187, 0.3);
+        }
+
+        .arrow-button:hover {
+            background: #8fffbb;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(143, 255, 187, 0.4);
+        }
+
+        .arrow-button:hover .arrow {
+            border-color: #0a0a0a;
+        }
+
+        .arrow {
+            width: 22px;
+            height: 22px;
+            border-right: 3px solid #8fffbb;
+            border-top: 3px solid #8fffbb;
+            transform: rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+
+        .arrow.left {
+            transform: rotate(-135deg);
+        }
+
+        .page-label {
+            position: static;
+            font-size: 14px;
+            color: #8fffbb;
+            font-weight: 800;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            font-family: 'KakaoBigFont', sans-serif;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(143, 255, 187, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="intro-overlay">
+        <div class="intro-content">
+            <h1>HIVE MIND</h1>
+            <h2>집단 의식의 시각화</h2>
+            
+            <div class="intro-steps">
+                <div class="intro-step">
+                    <span class="step-number">1</span>
+                    <span class="step-text">화면의 파티클들은 각자 독립적인 생각을 가진 개인들입니다</span>
+                </div>
+                <div class="intro-step">
+                    <span class="step-number">2</span>
+                    <span class="step-text">화면을 클릭하면 자극적인 "바이럴 의견"이 퍼집니다</span>
+                </div>
+                <div class="intro-step">
+                    <span class="step-number">3</span>
+                    <span class="step-text">파티클들이 우르르 몰려드는 모습을 관찰하고, 그들의 의견을 살펴보세요<br>이제 그들은 모두 같은 의견에 동조합니다</span>
+                </div>
+                <div class="intro-step">
+                    <span class="step-number">4</span>
+                    <span class="step-text">이벤트가 끝난 뒤, 급격히 흥미를 잃고 흩어지는 모습을 보며<br>통계에서 얼마나 많은 사람들이 독립적 사고를 잃었는지 확인하세요</span>
+                </div>
+            </div>
+            
+            <button class="start-button" onclick="startExperience()">체험 시작하기</button>
+        </div>
+    </div>
+
+    <div id="cooldown-overlay">
+        잠시만요! 파티클들의 반응을 관찰해주세요 🔍
+    </div>
+
+    <div id="canvas-container"></div>
+    
+    <div id="ui-overlay">
+        <div id="title">HIVE<br>MIND</div>
+        <div id="subtitle">자극적인 의견에 우르르 몰려드는<br>집단 의식의 시각화</div>
+        
+        <div id="instructions">
+            개별 파티클에 마우스를 올리면 그들의 목소리를 들을 수 있습니다<br>
+            화면을 클릭하여 "바이럴 이벤트"를 생성하세요
+        </div>
+
+        <div id="stats">
+            <div class="stat-label">TOTAL AGENTS</div>
+            <span class="stat-value" id="total-agents">2000</span>
+            <div class="stat-label">CONFORMING</div>
+            <span class="stat-value" id="conforming-agents">0</span>
+            <div class="stat-label">INDEPENDENCE</div>
+            <span class="stat-value" id="independence">100%</span>
+        </div>
+
+        <div id="quote-display"></div>
+        <div id="viral-message">
+            <div class="message-bubble"></div>
+        </div>
+        <div class="viral-indicator"></div>
+
+        <div id="conformity-label">동조율 CONFORMITY RATE</div>
+        <div id="conformity-bar">
+            <div id="conformity-fill"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const universalConformist = ["ㄹㅇㅋㅋ", "나도 정확히 이렇게 생각함", "이게 맞는 듯..", "완전 공감", "ㅆㅇㅈ", "이게 팩트임"];
+        
+        const viralMessagesMap = {
+            "솔직히 ***은 너무 가식적인 듯": ["보기 힘들긴 함ㅋㅋ", "일상이 연기인 듯", "다들 그렇게 생각하고 있었네", "나오면 채널 돌림"],
+            "이게 다 짱깨들 때문임": ["간첩들이 나라먹었음", "중국인들 또 몰려왔네 ㅉㅉ", "여기 반박하면 짱깨임"],
+            "페미들 보기 역겹다ㅋㅋ": ["이게 정상인들 의견임", "진짜 과한 듯", "극단적임"],
+            "000은 허위의식 덩어리인듯": ["티 나더라", "팬들만 모르는 척함", "다 이미지 메이킹이지 뭐"],
+            "요즘 정치 수준 ㅋㅋㅋㅋ": ["걍 나라망함", "국민 우롱하는 거 맞음", "탄핵해야됨"],
+            "저 브랜드 쓰는 사람들 이해 안 됨": ["돈 아까운데", "브랜드 노예 맞음", "그냥 허세충들임"],
+            "MZ는 진짜 답 없긴 한듯": ["요즘 애들 진짜", "회사에서 개고생함", "근성이 없는듯"],
+            "인스타충들은 현실을 못살음": ["그냥 관종들임", "좋아요 구걸이 일상..", "어딜가도 사진찍을 생각뿐임"],
+            "요즘 드라마 퀄리티 개떨어짐": ["옛날이 나았음", "재미없는 게 맞음", "PPL이 주인공인듯"],
+            "유튜버 XX 진짜 역하다": ["보기 힘들음", "다 연출인 듯", "조회수 장사 그만좀"],
+            "아이돌 팬덤들 수준 봐라 ㅋㅋ": ["어딜가도 빠순이가 문제임", "현실을 살아라", "돈바쳐주는 애들이지 뭐"],
+            "저 게임 하는 애들 인생 망함": ["시간 낭비 맞음", "부모님께 죄송해해라", "도박이랑 똑같음"],
+            "성형 티 너무 나는듯": ["티 나는 게 맞음", "이물감 심하다", "진짜 과하다 ㅋㅋㅋ"],
+            "요즘 노래들 너무 구림": ["개성이 없음", "중얼중얼거리기만 함", "다 똑같은 듯"],
+            "양산형 카페가는 애들 한심": ["인스타용 맞음", "비싸기만 한데 왜감", "다 허영심임"]
+        };
+
+        const independentThoughts = ["오늘 밥 뭐 먹지", "집에 가고 싶다", "주말 빨리 왔으면", "커피 한 잔 마실까", "날씨 진짜 좋네", "운동 해야 하는데", "책 한 권 읽을까", "음악 듣고 싶어", "산책 가고 싶다", "영화 뭐 볼까", "친구한테 연락해야지", "취미 생활 하고 싶다", "여행 가고 싶어", "새로운 거 배워볼까", "그림 그리고 싶다", "게임이나 할까", "좀 쉬고 싶어", "청소 좀 해야겠다", "노래 불러야지"];
+
+        const viralOpinions = ["솔직히 ***은 너무 가식적인 듯", "이게 다 짱깨들 때문임", "페미들 보기 역겹다ㅋㅋ", "000은 허위의식 덩어리인듯", "요즘 정치 수준 ㅋㅋㅋㅋ", "저 브랜드 쓰는 사람들 이해 안 됨", "MZ는 진짜 답 없긴 한듯", "인스타충들은 현실을 못살음", "요즘 드라마 퀄리티 개떨어짐", "유튜버 XX 진짜 역하다", "아이돌 팬덤들 수준 봐라 ㅋㅋ", "저 게임 하는 애들 인생 망함", "성형 티 너무 나는듯", "요즘 노래들 너무 구림", "양산형 카페가는 애들 한심"];
+
+        let displayConforming = 0;
+        let displayIndependence = 100;
+        let availableOpinions = [...viralOpinions];
+        let currentViralOpinion = "";
+        let scene, camera, renderer, particles = [];
+        let viralTarget = null;
+        let viralStrength = 0;
+        const particleCount = 2000;
+        let mouseX = 0, mouseY = 0;
+        let conformingCount = 0;
+        let isSwarming = false;
+        let viralPoint = null;
+        let swarmEndTimer = null;
+        let lastClickTime = 0;
+        const clickCooldown = 6000;
+        const swarmDuration = 7000;
+
+        function startExperience() {
+            document.getElementById('intro-overlay').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('intro-overlay').style.display = 'none';
+            }, 800);
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.0008);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 400;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x0a0a0a, 1);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            createParticles();
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onCanvasClick);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('mousemove', onCanvasHover);
+            animate();
+        }
+
+        function createParticles() {
+            const geometry = new THREE.SphereGeometry(1.5, 8, 8);
+            for (let i = 0; i < particleCount; i++) {
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(Math.random(), 0.7, 0.6),
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.x = (Math.random() - 0.5) * 800;
+                particle.position.y = (Math.random() - 0.5) * 600;
+                particle.position.z = (Math.random() - 0.5) * 400;
+                particle.userData = {
+                    velocityX: (Math.random() - 0.5) * 0.5,
+                    velocityY: (Math.random() - 0.5) * 0.5,
+                    velocityZ: (Math.random() - 0.5) * 0.5,
+                    originalColor: material.color.clone(),
+                    conforming: false,
+                    independence: Math.random() * 0.3 + 0.1
+                };
+                scene.add(particle);
+                particles.push(particle);
+            }
+        }
+
+        function onCanvasClick(event) {
+            createViralEvent(event.clientX, event.clientY);
+        }
+
+        function onCanvasHover(event) {
+            const mouse = new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            raycaster.params.Points = raycaster.params.Points || {};
+            raycaster.params.Points.threshold = 5;
+            const intersects = raycaster.intersectObjects(particles);
+            if (intersects.length > 0) {
+                if (isSwarming || viralStrength > 0) {
+                    showMatchingConformistQuote();
+                } else {
+                    showIndependentThought();
+                }
+            }
+        }
+
+        function getRandomViralOpinion() {
+            if (availableOpinions.length === 0) {
+                availableOpinions = [...viralOpinions];
+            }
+            const randomIndex = Math.floor(Math.random() * availableOpinions.length);
+            const selectedOpinion = availableOpinions[randomIndex];
+            availableOpinions.splice(randomIndex, 1);
+            return selectedOpinion;
+        }
+
+        function createViralEvent(x, y) {
+            const currentTime = Date.now();
+            if (currentTime - lastClickTime < clickCooldown) {
+                const cooldownOverlay = document.getElementById('cooldown-overlay');
+                cooldownOverlay.classList.add('show');
+                setTimeout(() => {
+                    cooldownOverlay.classList.remove('show');
+                }, 1500);
+                return;
+            }
+            lastClickTime = currentTime;
+
+            if (swarmEndTimer) {
+                clearTimeout(swarmEndTimer);
+                swarmEndTimer = null;
+            }
+            
+            if (viralPoint) {
+                scene.remove(viralPoint);
+                viralPoint = null;
+            }
+            
+            const vector = new THREE.Vector3((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1, 0.5);
+            vector.unproject(camera);
+            const dir = vector.sub(camera.position).normalize();
+            const distance = -camera.position.z / dir.z;
+            viralTarget = camera.position.clone().add(dir.multiplyScalar(distance));
+            
+            const pointGeometry = new THREE.SphereGeometry(10, 32, 32);
+            const pointMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff, 
+                transparent: true, 
+                opacity: 0.95
+            });
+            viralPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+            viralPoint.position.copy(viralTarget);
+            
+            const glowGeometry = new THREE.SphereGeometry(15, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+            viralPoint.add(glowSphere);
+            
+            scene.add(viralPoint);
+            
+            currentViralOpinion = getRandomViralOpinion();
+            const messageElement = document.getElementById('viral-message');
+            const bubbleElement = messageElement.querySelector('.message-bubble');
+            bubbleElement.textContent = currentViralOpinion;
+            messageElement.style.left = x + 'px';
+            messageElement.style.top = (y - 60) + 'px';
+            messageElement.classList.add('viral-message-show');
+            document.querySelector('.viral-indicator').classList.add('active');
+            
+            setTimeout(() => {
+                viralStrength = 2.5;
+                isSwarming = true;
+                particles.forEach(p => {
+                    p.userData.conforming = true;
+                    p.userData.swarmStartTime = Date.now();
+                });
+            }, 800);
+            
+            setTimeout(() => {
+                messageElement.classList.remove('viral-message-show');
+            }, 3000);
+            
+            setTimeout(() => {
+                document.querySelector('.viral-indicator').classList.remove('active');
+            }, 2000);
+            
+            swarmEndTimer = setTimeout(() => {
+                isSwarming = false;
+            }, swarmDuration);
+            
+            setTimeout(() => {
+                if (viralPoint) {
+                    scene.remove(viralPoint);
+                    viralPoint = null;
+                }
+            }, swarmDuration);
+        }
+
+        function showIndependentThought() {
+            const thought = independentThoughts[Math.floor(Math.random() * independentThoughts.length)];
+            const display = document.getElementById('quote-display');
+            display.textContent = '"' + thought + '"';
+            display.className = 'quote-fade-in';
+            setTimeout(() => { display.className = 'quote-fade-out'; }, 1500);
+        }
+
+        function showMatchingConformistQuote() {
+            let specificMessages = viralMessagesMap[currentViralOpinion] || [];
+            let allMessages = [...universalConformist, ...specificMessages];
+            const quote = allMessages[Math.floor(Math.random() * allMessages.length)];
+            const display = document.getElementById('quote-display');
+            display.textContent = '"' + quote + '"';
+            display.className = 'quote-fade-in';
+            setTimeout(() => { display.className = 'quote-fade-out'; }, 2000);
+        }
+
+        function onMouseMove(event) {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (viralPoint) {
+                const time = Date.now() * 0.001;
+                const basePulse = Math.sin(time * 2) * 0.15 + 1;
+                const microPulse = Math.sin(time * 8) * 0.05;
+                const finalScale = basePulse + microPulse;
+                
+                viralPoint.scale.set(finalScale, finalScale, finalScale);
+                viralPoint.material.opacity = 0.9 + Math.sin(time * 3) * 0.1;
+                
+                if (viralPoint.children[0]) {
+                    const glowScale = (basePulse + microPulse) * 1.2;
+                    viralPoint.children[0].scale.set(glowScale, glowScale, glowScale);
+                    viralPoint.children[0].material.opacity = 0.2 + Math.sin(time * 2.5) * 0.15;
+                }
+                
+                viralPoint.rotation.y += 0.01;
+                viralPoint.rotation.x += 0.005;
+            }
+            if (viralStrength > 0) {
+                viralStrength *= 0.95;
+                if (viralStrength < 0.01) {
+                    viralStrength = 0;
+                }
+            }
+            conformingCount = 0;
+            particles.forEach(particle => {
+                if (particle.userData.conforming && viralTarget && viralStrength > 0) {
+                    const elapsedTime = Date.now() - particle.userData.swarmStartTime;
+                    const dispersalFactor = Math.min(elapsedTime / swarmDuration, 1);
+                    
+                    const direction = new THREE.Vector3().subVectors(viralTarget, particle.position).normalize();
+                    const distance = particle.position.distanceTo(viralTarget);
+                    
+                    const randomOffset = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2,
+                        (Math.random() - 0.5) * 2
+                    );
+                    
+                    const dispersalPush = new THREE.Vector3(
+                        (Math.random() - 0.5) * dispersalFactor * 0.5, 
+                        (Math.random() - 0.5) * dispersalFactor * 0.5, 
+                        (Math.random() - 0.5) * dispersalFactor * 0.5
+                    );
+                    
+                    let moveIntensity = 1.0;
+                    if (distance < 100) {
+                        moveIntensity = 0.3 + (distance / 100) * 0.5;
+                    } else if (distance < 300) {
+                        moveIntensity = 1.5;
+                    } else {
+                        moveIntensity = 1.2;
+                        const particleOffset = particle.position.x * 0.01 + particle.position.y * 0.01;
+                        const zigzagX = Math.sin(Date.now() * 0.005 + particle.position.y * 0.1 + particleOffset) * 3;
+                        const zigzagY = Math.cos(Date.now() * 0.005 + particle.position.x * 0.1 + particleOffset) * 3;
+                        particle.position.x += zigzagX;
+                        particle.position.y += zigzagY;
+                    }
+                    
+                    const resistance = particle.userData.independence * 0.2;
+                    const force = viralStrength * (1 - resistance) * moveIntensity * (1 - dispersalFactor * 0.7);
+                    particle.position.add(direction.multiplyScalar(force * 7));
+                    particle.position.add(dispersalPush);
+                    particle.position.add(randomOffset.multiplyScalar(0.3));
+                    
+                    let nearbyCount = 0;
+                    const repulsion = new THREE.Vector3(0, 0, 0);
+                    particles.forEach(other => {
+                        if (other === particle) return;
+                        const dist = particle.position.distanceTo(other.position);
+                        if (dist < 12 && dist > 0) {
+                            const pushAway = new THREE.Vector3().subVectors(particle.position, other.position).normalize().multiplyScalar(0.5);
+                            repulsion.add(pushAway);
+                            nearbyCount++;
+                        }
+                    });
+                    if (nearbyCount > 0) {
+                        particle.position.add(repulsion);
+                    }
+                    
+                    const swarmColor = new THREE.Color();
+                    if (distance < 50) {
+                        const particlePhase = particle.position.x * 0.01 + particle.position.y * 0.01;
+                        const orbit = new THREE.Vector3(
+                            Math.sin(Date.now() * 0.001 + particlePhase) * 0.8, 
+                            Math.cos(Date.now() * 0.001 + particlePhase + 1) * 0.8, 
+                            Math.sin(Date.now() * 0.0015 + particlePhase + 2) * 0.8
+                        );
+                        particle.position.add(orbit);
+                        swarmColor.setHSL(0.33, 0.95, 0.3 + (distance / 50) * 0.2);
+                    } else if (distance < 150) {
+                        swarmColor.setHSL(0.33, 0.9, 0.4 + (distance / 150) * 0.15);
+                    } else {
+                        swarmColor.setHSL(0.33, 0.85, 0.5 + (distance / 400) * 0.2);
+                    }
+                    particle.material.color.lerpColors(swarmColor, particle.userData.originalColor, dispersalFactor);
+                    const baseScale = 1.0 + (150 - Math.min(distance, 150)) / 150 * 0.8;
+                    const pulse = Math.sin(Date.now() * 0.003 + particle.position.x * 0.1) * 0.15;
+                    const swarmScale = baseScale + pulse;
+                    particle.scale.set(swarmScale, swarmScale, swarmScale);
+                    particle.material.opacity = 0.6 + (150 - Math.min(distance, 150)) / 150 * 0.4;
+                    conformingCount++;
+                } else {
+                    if (particle.userData.conforming && !isSwarming) {
+                        particle.userData.conforming = false;
+                    }
+                    particle.position.x += particle.userData.velocityX;
+                    particle.position.y += particle.userData.velocityY;
+                    particle.position.z += particle.userData.velocityZ;
+                    if (Math.abs(particle.position.x) > 400) particle.userData.velocityX *= -1;
+                    if (Math.abs(particle.position.y) > 300) particle.userData.velocityY *= -1;
+                    if (Math.abs(particle.position.z) > 200) particle.userData.velocityZ *= -1;
+                    particle.material.color.lerp(particle.userData.originalColor, 0.05);
+                    particle.material.opacity = 0.8;
+                    const scale = 1 + Math.sin(Date.now() * 0.001 + particle.position.x) * 0.1;
+                    particle.scale.set(scale, scale, scale);
+                }
+                if (!particle.userData.conforming) {
+                    particle.position.x += (Math.random() - 0.5) * 0.2;
+                    particle.position.y += (Math.random() - 0.5) * 0.2;
+                    particle.position.z += (Math.random() - 0.5) * 0.2;
+                }
+            });
+            updateStats();
+            camera.position.x += (mouseX * 50 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 50 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+
+        function updateStats() {
+            const conformityRate = (conformingCount / particleCount) * 100;
+            const targetIndependence = 100 - conformityRate;
+            
+            const smoothingFactor = 0.15;
+            displayConforming += (conformingCount - displayConforming) * smoothingFactor;
+            displayIndependence += (targetIndependence - displayIndependence) * smoothingFactor;
+            
+            document.getElementById('conforming-agents').textContent = Math.round(displayConforming);
+            document.getElementById('independence').textContent = displayIndependence.toFixed(1) + '%';
+            document.getElementById('conformity-fill').style.width = conformityRate + '%';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 화살표 버튼 추가 및 이벤트
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'arrow-button-container';
+
+        const backButton = document.createElement('div');
+        backButton.className = 'arrow-button back';
+        backButton.innerHTML = '<div class="arrow left"></div>';
+        backButton.addEventListener('click', () => {
+            window.location.href = 'page1.html';
+        });
+        buttonContainer.appendChild(backButton);
+
+        const pageLabel = document.createElement('div');
+        pageLabel.className = 'page-label';
+        pageLabel.textContent = '2/3 - 무조건적 동조화';
+        buttonContainer.appendChild(pageLabel);
+
+        const arrowButton = document.createElement('div');
+        arrowButton.className = 'arrow-button';
+        arrowButton.innerHTML = '<div class="arrow"></div>';
+        arrowButton.addEventListener('click', () => {
+            window.location.href = 'page3.html';
+        });
+        buttonContainer.appendChild(arrowButton);
+
+        document.body.appendChild(buttonContainer);
+
+        init();
+    </script>
+</body>
+</html>
